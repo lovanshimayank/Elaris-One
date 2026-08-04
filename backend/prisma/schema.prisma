@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+enum OpportunityType {
+  INTERNSHIP
+  JOB
+  HACKATHON
+  EVENT
+}
+
+model Department {
+  id   String @id @default(cuid())
+  name String @unique
+  code String @unique
+
+  users    User[]
+  subjects Subject[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subject {
+  id          String @id @default(cuid())
+  subjectName String
+  subjectCode String @unique
+  semester    Int
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  notes Note[]
+  pyqs  PYQ[]
+
+  createdAt DateTime @default(now())
+
+  @@index([semester])
+}
+
+model User {
+  id String @id @default(cuid())
+
+  enrollmentNumber String @unique
+  fullName         String
+  email            String @unique
+  password         String
+
+  phone String?
+
+  college  String?
+  branch   String?
+  year     Int?
+  semester Int?
+  section  String?
+
+  profileImage String?
+
+  github   String?
+  linkedin String?
+
+  bio String?
+
+  skills String[]
+
+  role UserRole @default(STUDENT)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  notes         Note[]
+  pyqs          PYQ[]
+  opportunities Opportunity[]
+  bookmarks     Bookmark[]
+
+  isVerified Boolean @default(false)
+  isActive   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enrollmentNumber])
+}
+
+model Note {
+  id String @id @default(cuid())
+
+  title       String
+  description String?
+
+  subject  String
+  semester Int
+  branch   String
+
+  pdfUrl    String
+  thumbnail String?
+
+  downloads Int @default(0)
+
+  isApproved Boolean @default(false)
+  isPublic   Boolean @default(true)
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Subject   Subject?   @relation(fields: [subjectId], references: [id])
+  subjectId String?
+  Bookmark  Bookmark[]
+}
+
+model PYQ {
+  id String @id @default(cuid())
+
+  title String
+
+  subject String
+
+  semester Int
+
+  branch String
+
+  year Int
+
+  pdfUrl String
+
+  downloads Int @default(0)
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+  Subject   Subject? @relation(fields: [subjectId], references: [id])
+  subjectId String?
+}
+
+model Opportunity {
+  id String @id @default(cuid())
+
+  title String
+
+  description String
+
+  company String
+
+  applyLink String
+
+  deadline DateTime
+
+  type OpportunityType
+
+  postedById String
+  postedBy   User   @relation(fields: [postedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Bookmark {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  noteId String?
+  note   Note?   @relation(fields: [noteId], references: [id])
+
+  createdAt DateTime @default(now())
+}
