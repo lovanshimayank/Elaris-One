@@ -49,7 +49,7 @@ export const registerUser = async (data: RegisterData) => {
   const { password, ...safeUser } = user;
   return {
     token,
-    user,
+    user: safeUser,
   };
 };
 
@@ -82,6 +82,6 @@ export const loginUser = async (data: LoginData) => {
 
   return {
     token,
-    user,
+    user: safeUser,
   };
 };

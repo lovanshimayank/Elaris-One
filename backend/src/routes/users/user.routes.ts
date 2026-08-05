@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { authenticate } from "../../middleware/auth.middleware";
 
 import {
@@ -9,6 +10,7 @@ import {
 const router = Router();
 
 router.get("/me", authenticate, getProfile);
+
 router.patch("/me", authenticate, updateProfile);
 
 export default router;

@@ -5,7 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 import routes from "./routes/index.js";
-
+import path from "path";
 const app = express();
 
 app.use(cors());
@@ -19,6 +19,10 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"))
+);
 
 app.get("/", (_, res) => {
   res.json({
