@@ -2,27 +2,44 @@ import { prisma } from "../../lib/prisma";
 
 
 export const createNote = async (
-    userId: string,
-    data: any
+  userId: string,
+  data: any
 ) => {
+    console.log("Incoming Note:", data);
 
-    return prisma.note.create({
-        data: {
-            title: data.title,
-            description: data.description,
+  return prisma.note.create({
+  data: {
+    title: data.title,
+    description: data.description,
 
-            subject: data.subject,
-            semester: data.semester,
-            branch: data.branch,
+    semester: data.semester,
+    branch: data.branch,
+    pdfUrl: data.pdfUrl,
 
-            pdfUrl: data.pdfUrl,
+    subject: {
+      connect: {
+        id: data.subjectId,
+      },
+    },
 
-            uploadedById: userId
-        }
-    });
+    uploadedBy: {
+      connect: {
+        id: userId,
+      },
+    },
+  },
 
+  include: {
+    subject: true,
+    uploadedBy: {
+      select: {
+        id: true,
+        fullName: true,
+      },
+    },
+  },
+});
 };
-
 
 
 export const getAllNotes = async () => {

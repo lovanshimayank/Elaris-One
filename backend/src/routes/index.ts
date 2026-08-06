@@ -11,6 +11,8 @@ import searchRoutes from "./search/search.routes.js";
 import uploadRoutes from "./uploads/upload.routes";
 import departmentRoutes from "./departments/department.routes";
 import subjectRoutes from "./subjects/subject.routes";
+import bookmarkRoutes from "./bookmarks/bookmark.routes";
+
 const router = Router();
 
 router.use("/users", userRoutes);
@@ -23,5 +25,6 @@ router.use("/search", searchRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/departments", departmentRoutes);
 router.use("/subjects", subjectRoutes);
+router.use("/bookmarks", bookmarkRoutes);
 
 export default router;

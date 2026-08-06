@@ -11,9 +11,14 @@ import {
 
 
 export const createNoteController = async(
+    
     req:Request,
     res:Response
 )=>{
+
+    console.log("========== NOTE CONTROLLER ==========");
+
+    console.log("Request Body:", req.body);
 
     const note = await createNote(
         req.user!.id,

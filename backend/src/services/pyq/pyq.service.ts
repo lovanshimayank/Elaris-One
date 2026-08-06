@@ -6,10 +6,16 @@ export const createPYQ = async (
     data:any
 )=>{
 
+    console.log("Incoming Data:", data);
+      
     return prisma.pYQ.create({
         data:{
             ...data,
-            uploadedById:userId
+            uploadedBy: {
+    connect: {
+        id: userId
+    }
+}
         }
     });
 

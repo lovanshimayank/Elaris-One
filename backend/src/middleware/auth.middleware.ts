@@ -7,6 +7,14 @@ interface JwtPayload {
   role: string;
 }
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
+
 
 
 export const authenticate = async (
@@ -30,6 +38,7 @@ export const authenticate = async (
       token,
       process.env.JWT_SECRET!
     ) as JwtPayload;
+    console.log("Decoded Token:", decoded);
     
 
     const user = await prisma.user.findUnique({
@@ -37,6 +46,7 @@ export const authenticate = async (
         id: decoded.userId,
       },
     });
+    console.log("User from DB:", user);
     
 
     if (!user) {

@@ -128,7 +128,7 @@ model Note {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Bookmark Bookmark[]
+  bookmarks Bookmark[]
 }
 
 model PYQ {
@@ -152,6 +152,8 @@ model PYQ {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  bookmarks Bookmark[]
 }
 
 model Opportunity {
@@ -177,6 +179,8 @@ model Opportunity {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  bookmarks Bookmark[]
 }
 
 model Bookmark {
@@ -187,6 +191,12 @@ model Bookmark {
 
   noteId String?
   note   Note?   @relation(fields: [noteId], references: [id])
+
+  pyqId String?
+  pyq   PYQ?    @relation(fields: [pyqId], references: [id])
+
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
 
   createdAt DateTime @default(now())
 }
