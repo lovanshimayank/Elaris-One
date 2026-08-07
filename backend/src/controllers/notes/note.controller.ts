@@ -59,7 +59,7 @@ export const getNoteController = async(
 )=>{
 
     const note = await getNoteById(
-        req.params.id
+        req.params.id as string
     );
 
 
@@ -78,7 +78,7 @@ export const updateNoteController = async(
 )=>{
 
     const note = await updateNote(
-        req.params.id,
+        req.params.id as string,
         req.body
     );
 
@@ -99,7 +99,7 @@ export const deleteNoteController = async(
 )=>{
 
     await deleteNote(
-        req.params.id
+        req.params.id as string
     );
 
 

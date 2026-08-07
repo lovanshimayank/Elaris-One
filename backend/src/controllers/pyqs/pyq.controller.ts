@@ -54,7 +54,7 @@ export const getSinglePYQController = async(
 )=>{
 
     const pyq = await getPYQById(
-        req.params.id as string
+        req.params.id as string as string
     );
 
 
@@ -76,7 +76,7 @@ export const updatePYQController = async(
 
 
     const pyq = await updatePYQ(
-        req.params.id,
+        req.params.id as string,
         req.body
     );
 
@@ -100,7 +100,7 @@ export const deletePYQController = async(
 
 
     await deletePYQ(
-        req.params.id
+        req.params.id as string
     );
 
 

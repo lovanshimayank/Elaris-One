@@ -44,7 +44,7 @@ export const getSingleOpportunityController = async (
   res: Response
 ) => {
   const opportunity = await getOpportunityById(
-    req.params.id
+    req.params.id as string
   );
 
   return res.status(200).json({
@@ -59,7 +59,7 @@ export const updateOpportunityController = async (
   res: Response
 ) => {
   const opportunity = await updateOpportunity(
-    req.params.id,
+    req.params.id as string,
     req.body
   );
 
@@ -75,7 +75,7 @@ export const deleteOpportunityController = async (
   req: Request,
   res: Response
 ) => {
-  await deleteOpportunity(req.params.id);
+  await deleteOpportunity(req.params.id as string);
 
   return res.status(200).json({
     success: true,

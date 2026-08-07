@@ -45,7 +45,7 @@ export const deleteBookmark = async (
   res: Response
 ) => {
   await removeBookmark(
-    req.params.id,
+    req.params.id as string,
     req.user!.id
   );
 

@@ -14,8 +14,10 @@ export const globalSearch = async (
         },
         {
           subject: {
-            contains: keyword,
-            mode: "insensitive",
+            name: {
+              contains: keyword,
+              mode: "insensitive"
+            }
           },
         },
       ],
@@ -34,8 +36,10 @@ export const globalSearch = async (
         },
         {
           subject: {
-            contains: keyword,
-            mode: "insensitive",
+            name: {
+              contains: keyword,
+              mode: "insensitive"
+            }
           },
         },
       ],
