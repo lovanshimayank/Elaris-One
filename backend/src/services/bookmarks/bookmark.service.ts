@@ -4,12 +4,26 @@ export const addBookmark = async (
   userId: string,
   data: any
 ) => {
+
+  const existing = await prisma.bookmark.findFirst({
+    where: {
+      userId,
+      noteId: data.noteId ?? null,
+      pyqId: data.pyqId ?? null,
+      opportunityId: data.opportunityId ?? null,
+    },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
   return prisma.bookmark.create({
     data: {
       userId,
-      noteId: data.noteId,
-      pyqId: data.pyqId,
-      opportunityId: data.opportunityId,
+      noteId: data.noteId ?? null,
+      pyqId: data.pyqId ?? null,
+      opportunityId: data.opportunityId ?? null,
     },
   });
 };

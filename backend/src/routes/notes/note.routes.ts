@@ -1,60 +1,45 @@
-import {Router} from "express";
+import { Router } from "express";
 
-import { authenticate } from "../../middleware/auth.middleware";
-
+import { authenticate } from "../../middleware/auth.middleware.js";
 
 import {
-createNoteController,
-getNotesController,
-getNoteController,
-updateNoteController,
-deleteNoteController
-
-} from "../../controllers/notes/note.controller";
-
+  createNoteController,
+  getNotesController,
+  getNoteController,
+  updateNoteController,
+  deleteNoteController,
+} from "../../controllers/notes/note.controller.js";
 
 const router = Router();
 
-
-
 router.post(
-"/",
-authenticate,
-createNoteController
+  "/",
+  authenticate,
+  createNoteController
 );
-
-
 
 router.get(
-"/",
-authenticate,
-getNotesController
+  "/",
+  authenticate,
+  getNotesController
 );
-
-
 
 router.get(
-"/:id",
-authenticate,
-getNoteController
+  "/:id",
+  authenticate,
+  getNoteController
 );
-
-
 
 router.patch(
-"/:id",
-authenticate,
-updateNoteController
+  "/:id",
+  authenticate,
+  updateNoteController
 );
-
-
 
 router.delete(
-"/:id",
-authenticate,
-deleteNoteController
+  "/:id",
+  authenticate,
+  deleteNoteController
 );
-
-
 
 export default router;

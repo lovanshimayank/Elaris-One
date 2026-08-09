@@ -15,8 +15,6 @@ declare global {
   }
 }
 
-
-
 export const authenticate = async (
   req: Request,
   res: Response,
@@ -24,6 +22,36 @@ export const authenticate = async (
 ) => {
   try {
     const authHeader = req.headers.authorization;
+
+    /*
+     * DEVELOPMENT DEMO MODE
+     *
+     * Used temporarily for the presentation build.
+     * Production authentication remains below.
+     */
+    if (
+      process.env.NODE_ENV === "development" &&
+      (!authHeader || !authHeader.startsWith("Bearer "))
+    ) {
+      const demoUser = await prisma.user.findFirst({
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      if (!demoUser) {
+        return res.status(401).json({
+          success: false,
+          message: "No demo user found",
+        });
+      }
+
+      req.user = demoUser;
+
+      console.log("DEMO MODE: Using user:", demoUser.email);
+
+      return next();
+    }
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
@@ -38,16 +66,12 @@ export const authenticate = async (
       token,
       process.env.JWT_SECRET!
     ) as JwtPayload;
-    console.log("Decoded Token:", decoded);
-    
 
     const user = await prisma.user.findUnique({
       where: {
         id: decoded.userId,
       },
     });
-    console.log("User from DB:", user);
-    
 
     if (!user) {
       return res.status(401).json({
@@ -60,6 +84,8 @@ export const authenticate = async (
 
     next();
   } catch (error) {
+    console.error("Authentication error:", error);
+
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",

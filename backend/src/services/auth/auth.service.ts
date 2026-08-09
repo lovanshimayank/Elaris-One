@@ -12,8 +12,8 @@ interface RegisterData {
 }
 
 interface LoginData {
-  enrollmentNumber: string;
-  password: string;
+    email: string;
+    password: string;
 }
 
 export const registerUser = async (data: RegisterData) => {
@@ -54,11 +54,12 @@ export const registerUser = async (data: RegisterData) => {
 };
 
 export const loginUser = async (data: LoginData) => {
-  const user = await prisma.user.findUnique({
+  
+    const user = await prisma.user.findUnique({
     where: {
-      enrollmentNumber: data.enrollmentNumber,
-    },
-  });
+        email: data.email
+    }
+});
 
   if (!user) {
     throw new Error("Invalid Credentials");
