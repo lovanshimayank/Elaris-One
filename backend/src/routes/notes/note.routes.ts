@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { authenticate } from "../../middleware/auth.middleware.js";
+import { authorize } from "../../middleware/authorize.middleware.js";
 
 import {
   createNoteController,
@@ -15,6 +16,7 @@ const router = Router();
 router.post(
   "/",
   authenticate,
+  authorize("ADMIN", "FACULTY"),
   createNoteController
 );
 
