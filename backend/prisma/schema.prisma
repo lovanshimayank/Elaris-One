@@ -28,6 +28,12 @@ enum DepartmentType {
   DESIGN
 }
 
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Department {
   id   String         @id @default(cuid())
   name String         @unique
@@ -120,7 +126,14 @@ model Note {
   downloads Int @default(0)
 
   isApproved Boolean @default(false)
-  isPublic   Boolean @default(true)
+  isPublic   Boolean @default(false)
+
+  moderationStatus     ModerationStatus @default(PENDING)
+  moderationScore      Float?
+  moderationReasons    String[]
+  moderationCategories String[]
+  moderationSummary    String?
+  moderatedAt          DateTime?
 
   uploadedById String
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
@@ -147,6 +160,13 @@ model PYQ {
 
   downloads Int @default(0)
 
+  moderationStatus     ModerationStatus @default(PENDING)
+  moderationScore      Float?
+  moderationReasons    String[]
+  moderationCategories String[]
+  moderationSummary    String?
+  moderatedAt          DateTime?
+
   uploadedById String
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
 
@@ -172,7 +192,14 @@ model Opportunity {
 
   deadline DateTime?
 
-  isActive Boolean @default(true)
+  isActive Boolean @default(false)
+
+  moderationStatus     ModerationStatus @default(PENDING)
+  moderationScore      Float?
+  moderationReasons    String[]
+  moderationCategories String[]
+  moderationSummary    String?
+  moderatedAt          DateTime?
 
   postedById String
   postedBy   User   @relation(fields: [postedById], references: [id])
