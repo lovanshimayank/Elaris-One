@@ -21,17 +21,58 @@ export const createNoteController = async (
       req.body
     );
 
+    const moderationStatus = note.moderationStatus;
+
+    let message = "Note created successfully";
+
+    if (moderationStatus === "APPROVED") {
+      message =
+        "Note created and automatically approved by AI moderation";
+    }
+
+    if (moderationStatus === "PENDING") {
+      message =
+        "Note submitted successfully and is awaiting moderation review";
+    }
+
+    if (moderationStatus === "REJECTED") {
+      message =
+        "Note was rejected by AI content moderation";
+    }
+
     return res.status(201).json({
       success: true,
-      message: "Note created successfully",
-      data: note,
+      message,
+      data: {
+        id: note.id,
+        title: note.title,
+        description: note.description,
+        semester: note.semester,
+        branch: note.branch,
+        pdfUrl: note.pdfUrl,
+
+        moderation: {
+          status: note.moderationStatus,
+          score: note.moderationScore,
+          reasons: note.moderationReasons,
+          categories: note.moderationCategories,
+          summary: note.moderationSummary,
+          moderatedAt: note.moderatedAt,
+        },
+
+        publication: {
+          isApproved: note.isApproved,
+          isPublic: note.isPublic,
+        },
+      },
     });
   } catch (error: any) {
     console.error("Create Note Error:", error);
 
     return res.status(400).json({
       success: false,
-      message: error.message || "Failed to create note",
+      message:
+        error.message || "Failed to create note",
     });
   }
 };
@@ -135,10 +176,19 @@ export const updateNoteController = async (
     ) {
       return res.status(403).json({
         success: false,
-        message: "You are not allowed to update this note",
+        message:
+          "You are not allowed to update this note",
       });
     }
 
+    /*
+     * IMPORTANT:
+     * Moderation and publication fields are intentionally
+     * excluded from normal update operations.
+     *
+     * They will be controlled by the future admin
+     * moderation workflow.
+     */
     const allowedFields = [
       "title",
       "description",
@@ -146,8 +196,6 @@ export const updateNoteController = async (
       "semester",
       "branch",
       "pdfUrl",
-      "isApproved",
-      "isPublic",
     ];
 
     const updateData: Record<string, any> = {};
@@ -173,7 +221,8 @@ export const updateNoteController = async (
 
     return res.status(400).json({
       success: false,
-      message: error.message || "Failed to update note",
+      message:
+        error.message || "Failed to update note",
     });
   }
 };
@@ -200,7 +249,8 @@ export const deleteNoteController = async (
     ) {
       return res.status(403).json({
         success: false,
-        message: "You are not allowed to delete this note",
+        message:
+          "You are not allowed to delete this note",
       });
     }
 
@@ -215,7 +265,8 @@ export const deleteNoteController = async (
 
     return res.status(400).json({
       success: false,
-      message: error.message || "Failed to delete note",
+      message:
+        error.message || "Failed to delete note",
     });
   }
 };
