@@ -1,78 +1,106 @@
-import { prisma } from "../../lib/prisma";
-
+﻿import { prisma } from "../../lib/prisma";
 
 export const createPYQ = async (
-    userId:string,
-    data:any
-)=>{
+  userId: string,
+  data: any
+) => {
+  console.log("Incoming PYQ Data:", data);
 
-    console.log("Incoming Data:", data);
-      
-    return prisma.pYQ.create({
-        data:{
-            ...data,
-            uploadedBy: {
-    connect: {
-        id: userId
-    }
-}
-        }
-    });
+  return prisma.pYQ.create({
+    data: {
+      title: data.title,
+      semester: data.semester,
+      branch: data.branch,
+      year: data.year,
+      pdfUrl: data.pdfUrl,
 
-};
-
-
-
-export const getAllPYQs = async ()=>{
-
-    return prisma.pYQ.findMany({
-        orderBy:{
-            createdAt:"desc"
-        }
-    });
-
-};
-
-
-
-export const getPYQById = async(
-    id:string
-)=>{
-
-    return prisma.pYQ.findUnique({
-        where:{
-            id
-        }
-    });
-
-};
-
-
-
-export const updatePYQ = async(
-    id:string,
-    data:any
-)=>{
-
-    return prisma.pYQ.update({
-        where:{
-            id
+      subject: {
+        connect: {
+          id: data.subjectId,
         },
-        data
-    });
+      },
 
+      uploadedBy: {
+        connect: {
+          id: userId,
+        },
+      },
+    },
+
+    include: {
+      subject: true,
+
+      uploadedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          role: true,
+        },
+      },
+    },
+  });
 };
 
+export const getAllPYQs = async () => {
+  return prisma.pYQ.findMany({
+    include: {
+      subject: true,
 
+      uploadedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          role: true,
+        },
+      },
+    },
 
-export const deletePYQ = async(
-    id:string
-)=>{
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
 
-    return prisma.pYQ.delete({
-        where:{
-            id
-        }
-    });
+export const getPYQById = async (
+  id: string
+) => {
+  return prisma.pYQ.findUnique({
+    where: {
+      id,
+    },
 
+    include: {
+      subject: true,
+
+      uploadedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          role: true,
+        },
+      },
+    },
+  });
+};
+
+export const updatePYQ = async (
+  id: string,
+  data: any
+) => {
+  return prisma.pYQ.update({
+    where: {
+      id,
+    },
+    data,
+  });
+};
+
+export const deletePYQ = async (
+  id: string
+) => {
+  return prisma.pYQ.delete({
+    where: {
+      id,
+    },
+  });
 };

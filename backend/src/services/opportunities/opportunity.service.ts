@@ -6,8 +6,31 @@ export const createOpportunity = async (
 ) => {
   return prisma.opportunity.create({
     data: {
-      ...data,
-      postedById: userId,
+      title: data.title,
+      description: data.description,
+      company: data.company,
+      location: data.location,
+      type: data.type,
+      applyLink: data.applyLink,
+      deadline: data.deadline
+        ? new Date(data.deadline)
+        : null,
+
+      postedBy: {
+        connect: {
+          id: userId,
+        },
+      },
+    },
+
+    include: {
+      postedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          enrollmentNumber: true,
+        },
+      },
     },
   });
 };
@@ -23,6 +46,7 @@ export const getAllOpportunities = async () => {
         },
       },
     },
+
     orderBy: {
       createdAt: "desc",
     },
@@ -36,6 +60,7 @@ export const getOpportunityById = async (
     where: {
       id,
     },
+
     include: {
       postedBy: {
         select: {
