@@ -1,12 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
+import api from "../../services/api";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
-
-const API_URL = "http://localhost:5000/api/v1";
 
 export default function AIChat() {
   const [message, setMessage] = useState("");
@@ -30,24 +29,9 @@ export default function AIChat() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.post(
-        `${API_URL}/ai/chat`,
-        {
-          message: trimmedMessage,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token
-              ? {
-                  Authorization: `Bearer ${token}`,
-                }
-              : {}),
-          },
-        }
-      );
+      const response = await api.post("/ai/chat", {
+        message: trimmedMessage,
+      });
 
       const reply =
         response.data?.data?.reply ||

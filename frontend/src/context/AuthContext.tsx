@@ -8,6 +8,7 @@ import {
 
 import type { User } from "../types";
 import * as authService from "../services/auth.service";
+import api from "../services/api";
 
 interface AuthContextType {
   user: User | null;
@@ -20,7 +21,7 @@ interface AuthContextType {
     email: string;
     password: string;
   }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(
@@ -33,38 +34,44 @@ export const AuthProvider = ({
   children: ReactNode;
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Restore authentication from HTTP-only cookie
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+    const restoreSession = async () => {
+      try {
+        const response = await api.get("/auth/me");
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
+        if (response.data?.success && response.data?.data) {
+          setUser(response.data.data);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setLoading(false);
+    restoreSession();
   }, []);
 
-const login = async (
-  email: string,
-  password: string
-) => {
-  const response = await authService.login({
-    email,
-    password,
-  });
+  const login = async (
+    email: string,
+    password: string
+  ) => {
+    const response = await authService.login({
+      email,
+      password,
+    });
 
-  const { token, user } = response.data;
+    if (!response.data?.user) {
+      throw new Error("Login response did not contain user data.");
+    }
 
-  localStorage.setItem("token", token);
-  localStorage.setItem("user", JSON.stringify(user));
-
-  setToken(token);
-  setUser(user);
-};
+    setUser(response.data.user);
+  };
 
   const register = async (data: {
     enrollmentNumber: string;
@@ -74,28 +81,28 @@ const login = async (
   }) => {
     const response = await authService.register(data);
 
-    const { token, user } = response.data;
+    if (!response.data?.user) {
+      throw new Error(
+        "Registration response did not contain user data."
+      );
+    }
 
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-
-    setToken(token);
-    setUser(user);
+    setUser(response.data.user);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        token: null,
         loading,
         login,
         register,

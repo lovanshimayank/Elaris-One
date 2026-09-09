@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
@@ -29,77 +29,68 @@ interface Opportunity {
   deadline?: string;
 }
 
-interface DashboardStats {
-  notes: number;
-  pyqs: number;
-  opportunities: number;
-  bookmarks: number;
+interface DashboardData {
+  user?: {
+    id: string;
+    fullName: string;
+    enrollmentNumber: string;
+    role: string;
+    branch?: string;
+    semester?: number;
+  };
+  stats: {
+    notes: number;
+    pyqs: number;
+    opportunities: number;
+    students: number;
+  };
+  latestNotes: Note[];
+  latestPYQs: PYQ[];
+  latestOpportunities: Opportunity[];
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const [stats, setStats] = useState<DashboardStats>({
-    notes: 0,
-    pyqs: 0,
-    opportunities: 0,
-    bookmarks: 0,
-  });
-
-  const [recentNotes, setRecentNotes] = useState<Note[]>([]);
-  const [recentPYQs, setRecentPYQs] = useState<PYQ[]>([]);
-  const [recentOpportunities, setRecentOpportunities] = useState<
-    Opportunity[]
-  >([]);
-
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchDashboard = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const [
-          notesResponse,
-          pyqsResponse,
-          opportunitiesResponse,
-          bookmarksResponse,
-        ] = await Promise.all([
-          api.get("/notes"),
-          api.get("/pyqs"),
-          api.get("/opportunities"),
-          api.get("/bookmarks"),
-        ]);
+        const response = await api.get("/dashboard");
 
-        const notes = notesResponse.data?.data || [];
-        const pyqs = pyqsResponse.data?.data || [];
-        const opportunities = opportunitiesResponse.data?.data || [];
-        const bookmarks = bookmarksResponse.data?.data || [];
+        if (!response.data?.success) {
+          throw new Error("Dashboard request failed");
+        }
 
-        setStats({
-          notes: notes.length,
-          pyqs: pyqs.length,
-          opportunities: opportunities.length,
-          bookmarks: bookmarks.length,
-        });
-
-        setRecentNotes(notes.slice(0, 3));
-        setRecentPYQs(pyqs.slice(0, 3));
-        setRecentOpportunities(opportunities.slice(0, 3));
+        setDashboard(response.data.data);
       } catch (err) {
-        console.error("Failed to load dashboard data:", err);
-        setError("Unable to load some dashboard data.");
+        console.error("Failed to load dashboard:", err);
+        setError("Unable to load dashboard data.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
+    fetchDashboard();
   }, []);
 
-  const firstName = user?.fullName?.split(" ")[0] || "Student";
+  const displayUser = dashboard?.user || user;
+
+  const firstName =
+    displayUser?.fullName?.trim().split(/\s+/)[0] || "Student";
+
+  const stats = dashboard?.stats || {
+    notes: 0,
+    pyqs: 0,
+    opportunities: 0,
+    students: 0,
+  };
 
   const formatDate = (date?: string) => {
     if (!date) return "No deadline";
@@ -119,7 +110,6 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      {/* HEADER */}
       <section className="dashboard-header">
         <div>
           <p className="dashboard-eyebrow">ELARIS-ONE</p>
@@ -138,14 +128,12 @@ export default function Dashboard() {
         </Link>
       </section>
 
-      {/* ERROR */}
       {error && (
         <div className="dashboard-error">
           {error}
         </div>
       )}
 
-      {/* STATS */}
       <section className="stats-grid">
         <Link to="/notes" className="stat-card">
           <span className="stat-icon">📚</span>
@@ -161,238 +149,156 @@ export default function Dashboard() {
           <div>
             <h3>PYQs</h3>
             <strong>{loading ? "..." : stats.pyqs}</strong>
-            <p>Previous year papers</p>
+            <p>Previous papers</p>
           </div>
         </Link>
 
         <Link to="/opportunities" className="stat-card">
-          <span className="stat-icon">💼</span>
+          <span className="stat-icon">🚀</span>
           <div>
             <h3>Opportunities</h3>
-            <strong>
-              {loading ? "..." : stats.opportunities}
-            </strong>
+            <strong>{loading ? "..." : stats.opportunities}</strong>
             <p>Internships & jobs</p>
           </div>
         </Link>
 
-        <Link to="/bookmarks" className="stat-card">
-          <span className="stat-icon">🔖</span>
+        <div className="stat-card">
+          <span className="stat-icon">🎓</span>
           <div>
-            <h3>Bookmarks</h3>
-            <strong>
-              {loading ? "..." : stats.bookmarks}
-            </strong>
-            <p>Saved resources</p>
+            <h3>Students</h3>
+            <strong>{loading ? "..." : stats.students}</strong>
+            <p>Elaris-One community</p>
           </div>
-        </Link>
-      </section>
-
-      {/* QUICK ACTIONS */}
-      <section className="dashboard-section">
-        <div className="section-heading">
-          <div>
-            <h2>Quick Access</h2>
-            <p>Jump directly to the resources you need.</p>
-          </div>
-        </div>
-
-        <div className="quick-actions">
-          <Link to="/notes" className="quick-action-card">
-            <span>📚</span>
-            <div>
-              <strong>Browse Notes</strong>
-              <p>Explore academic study material</p>
-            </div>
-          </Link>
-
-          <Link to="/pyqs" className="quick-action-card">
-            <span>📝</span>
-            <div>
-              <strong>Practice PYQs</strong>
-              <p>Prepare using previous papers</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/opportunities"
-            className="quick-action-card"
-          >
-            <span>🚀</span>
-            <div>
-              <strong>Find Opportunities</strong>
-              <p>Discover internships and jobs</p>
-            </div>
-          </Link>
-
-          <Link to="/ai" className="quick-action-card ai-action">
-            <span>🤖</span>
-            <div>
-              <strong>Ask Elaris AI</strong>
-              <p>Get personalized academic help</p>
-            </div>
-          </Link>
         </div>
       </section>
 
-      {/* RECENT RESOURCES */}
       <section className="dashboard-content-grid">
-        {/* NOTES */}
-        <div className="dashboard-panel">
-          <div className="panel-header">
+        <div className="dashboard-section">
+          <div className="section-heading">
             <div>
-              <h2>Recent Notes</h2>
-              <p>Latest study resources</p>
+              <p className="dashboard-eyebrow">STUDY MATERIAL</p>
+              <h2>Latest Notes</h2>
             </div>
 
-            <Link to="/notes">View all →</Link>
+            <Link to="/notes">View all</Link>
           </div>
 
           {loading ? (
             <div className="dashboard-empty">
               Loading notes...
             </div>
-          ) : recentNotes.length === 0 ? (
-            <div className="dashboard-empty">
-              No notes available yet.
+          ) : dashboard?.latestNotes?.length ? (
+            <div className="dashboard-list">
+              {dashboard.latestNotes.slice(0, 3).map((note) => (
+                <Link
+                  key={note.id}
+                  to={`/notes/${note.id}`}
+                  className="dashboard-list-item"
+                >
+                  <div>
+                    <h3>{note.title}</h3>
+                    <p>
+                      Semester {note.semester} • {note.branch}
+                    </p>
+                  </div>
+
+                  <span>
+                    {formatDate(note.createdAt)}
+                  </span>
+                </Link>
+              ))}
             </div>
           ) : (
-            <div className="resource-list">
-              {recentNotes.map((note) => (
-                <div className="resource-item" key={note.id}>
-                  <div className="resource-icon">📚</div>
-
-                  <div className="resource-info">
-                    <strong>{note.title}</strong>
-
-                    <span>
-                      Semester {note.semester} • {note.branch}
-                    </span>
-
-                    {note.description && (
-                      <p>
-                        {note.description.length > 100
-                          ? `${note.description.slice(0, 100)}...`
-                          : note.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className="dashboard-empty">
+              No notes available yet.
             </div>
           )}
         </div>
 
-        {/* PYQS */}
-        <div className="dashboard-panel">
-          <div className="panel-header">
+        <div className="dashboard-section">
+          <div className="section-heading">
             <div>
-              <h2>Recent PYQs</h2>
-              <p>Practice previous papers</p>
+              <p className="dashboard-eyebrow">EXAM PREPARATION</p>
+              <h2>Latest PYQs</h2>
             </div>
 
-            <Link to="/pyqs">View all →</Link>
+            <Link to="/pyqs">View all</Link>
           </div>
 
           {loading ? (
             <div className="dashboard-empty">
               Loading PYQs...
             </div>
-          ) : recentPYQs.length === 0 ? (
-            <div className="dashboard-empty">
-              No PYQs available yet.
+          ) : dashboard?.latestPYQs?.length ? (
+            <div className="dashboard-list">
+              {dashboard.latestPYQs.slice(0, 3).map((pyq) => (
+                <Link
+                  key={pyq.id}
+                  to={`/pyqs/${pyq.id}`}
+                  className="dashboard-list-item"
+                >
+                  <div>
+                    <h3>{pyq.title}</h3>
+                    <p>
+                      Semester {pyq.semester} • {pyq.branch} • {pyq.year}
+                    </p>
+                  </div>
+
+                  <span>
+                    {formatDate(pyq.createdAt)}
+                  </span>
+                </Link>
+              ))}
             </div>
           ) : (
-            <div className="resource-list">
-              {recentPYQs.map((pyq) => (
-                <div className="resource-item" key={pyq.id}>
-                  <div className="resource-icon">📝</div>
-
-                  <div className="resource-info">
-                    <strong>{pyq.title}</strong>
-
-                    <span>
-                      {pyq.year} • Semester {pyq.semester} •{" "}
-                      {pyq.branch}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="dashboard-empty">
+              No PYQs available yet.
             </div>
           )}
         </div>
       </section>
 
-      {/* OPPORTUNITIES */}
-      <section className="dashboard-section">
+      <section className="dashboard-section dashboard-opportunities">
         <div className="section-heading">
           <div>
+            <p className="dashboard-eyebrow">CAREER</p>
             <h2>Latest Opportunities</h2>
-            <p>Internships, jobs and other opportunities</p>
           </div>
 
-          <Link to="/opportunities">
-            View all →
-          </Link>
+          <Link to="/opportunities">View all</Link>
         </div>
 
         {loading ? (
           <div className="dashboard-empty">
             Loading opportunities...
           </div>
-        ) : recentOpportunities.length === 0 ? (
+        ) : dashboard?.latestOpportunities?.length ? (
+          <div className="dashboard-list">
+            {dashboard.latestOpportunities.slice(0, 3).map((opportunity) => (
+              <Link
+                key={opportunity.id}
+                to="/opportunities"
+                className="dashboard-list-item"
+              >
+                <div>
+                  <h3>{opportunity.title}</h3>
+                  <p>
+                    {opportunity.company || "Opportunity"} •{" "}
+                    {opportunity.type}
+                  </p>
+                </div>
+
+                <span>
+                  {formatDate(opportunity.deadline)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
           <div className="dashboard-empty">
             No opportunities available yet.
           </div>
-        ) : (
-          <div className="opportunity-grid">
-            {recentOpportunities.map((opportunity) => (
-              <div
-                className="opportunity-card"
-                key={opportunity.id}
-              >
-                <div className="opportunity-top">
-                  <span className="opportunity-type">
-                    {opportunity.type}
-                  </span>
-                </div>
-
-                <h3>{opportunity.title}</h3>
-
-                {opportunity.company && (
-                  <p className="opportunity-company">
-                    {opportunity.company}
-                  </p>
-                )}
-
-                <p className="opportunity-deadline">
-                  Deadline: {formatDate(opportunity.deadline)}
-                </p>
-              </div>
-            ))}
-          </div>
         )}
-      </section>
-
-      {/* AI CTA */}
-      <section className="dashboard-ai-banner">
-        <div>
-          <span className="ai-banner-icon">🤖</span>
-
-          <div>
-            <h2>Need help with your studies?</h2>
-
-            <p>
-              Ask Elaris AI about subjects, study plans,
-              available campus resources, internships,
-              programming concepts and more.
-            </p>
-          </div>
-        </div>
-
-        <Link to="/ai">
-          Start chatting →
-        </Link>
       </section>
     </div>
   );

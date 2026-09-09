@@ -12,7 +12,7 @@ import uploadRoutes from "./uploads/upload.routes";
 import departmentRoutes from "./departments/department.routes";
 import subjectRoutes from "./subjects/subject.routes";
 import bookmarkRoutes from "./bookmarks/bookmark.routes";
-import aiRoutes from "./ai/airoutes.js";
+import aiRoutes from "./ai/ai.routes.js";
 
 const router = Router();
 

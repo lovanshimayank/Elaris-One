@@ -25,6 +25,26 @@
 
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+
+    "src/services/admin/**",
+    "src/controllers/admin/**",
+    "src/routes/admin/**",
+
+    "src/services/assignments/**",
+    "src/controllers/assignments/**",
+    "src/routes/assignments/**",
+
+    "src/services/flashcards/**",
+    "src/controllers/flashcards/**",
+    "src/routes/flashcards/**",
+
+    "src/services/notifications/**",
+    "src/controllers/notifications/**",
+    "src/routes/notifications/**",
+
+    "src/services/quiz/**",
+    "src/controllers/quiz/**",
+    "src/routes/quiz/**"
   ]
 }

@@ -7,6 +7,147 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Department {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  code      String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  type      DepartmentType
+  subjects  Subject[]
+  users     User[]
+}
+
+model Subject {
+  id           String     @id @default(cuid())
+  semester     Int
+  departmentId String
+  createdAt    DateTime   @default(now())
+  code         String     @unique
+  name         String
+  updatedAt    DateTime   @updatedAt
+  notes        Note[]
+  pyqs         PYQ[]
+  department   Department @relation(fields: [departmentId], references: [id])
+}
+
+model User {
+  id               String        @id @default(cuid())
+  enrollmentNumber String        @unique
+  fullName         String
+  email            String        @unique
+  password         String
+  phone            String?
+  role             UserRole      @default(STUDENT)
+  semester         Int?
+  departmentId     String?
+  isVerified       Boolean       @default(false)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  bio              String?
+  branch           String?
+  college          String?
+  github           String?
+  linkedin         String?
+  profileImage     String?
+  section          String?
+  skills           String[]
+  year             Int?
+  bookmarks        Bookmark[]
+  notes            Note[]
+  opportunities    Opportunity[]
+  pyqs             PYQ[]
+  department       Department?   @relation(fields: [departmentId], references: [id])
+
+  @@index([enrollmentNumber])
+}
+
+model Note {
+  id                   String           @id @default(cuid())
+  title                String
+  description          String?
+  downloads            Int              @default(0)
+  subjectId            String
+  uploadedById         String
+  createdAt            DateTime         @default(now())
+  branch               String
+  isApproved           Boolean          @default(false)
+  isPublic             Boolean          @default(false)
+  pdfUrl               String
+  semester             Int
+  thumbnail            String?
+  updatedAt            DateTime         @updatedAt
+  moderatedAt          DateTime?
+  moderationCategories String[]
+  moderationReasons    String[]
+  moderationScore      Float?
+  moderationStatus     ModerationStatus @default(PENDING)
+  moderationSummary    String?
+  bookmarks            Bookmark[]
+  subject              Subject          @relation(fields: [subjectId], references: [id])
+  uploadedBy           User             @relation(fields: [uploadedById], references: [id])
+}
+
+model PYQ {
+  id                   String           @id @default(cuid())
+  title                String
+  year                 Int
+  subjectId            String
+  uploadedById         String
+  createdAt            DateTime         @default(now())
+  branch               String
+  downloads            Int              @default(0)
+  pdfUrl               String
+  semester             Int
+  updatedAt            DateTime         @updatedAt
+  moderatedAt          DateTime?
+  moderationCategories String[]
+  moderationReasons    String[]
+  moderationScore      Float?
+  moderationStatus     ModerationStatus @default(PENDING)
+  moderationSummary    String?
+  bookmarks            Bookmark[]
+  subject              Subject          @relation(fields: [subjectId], references: [id])
+  uploadedBy           User             @relation(fields: [uploadedById], references: [id])
+}
+
+model Opportunity {
+  id                   String           @id @default(cuid())
+  title                String
+  description          String
+  company              String?
+  applyLink            String?
+  deadline             DateTime?
+  type                 OpportunityType
+  postedById           String
+  createdAt            DateTime         @default(now())
+  isActive             Boolean          @default(false)
+  location             String?
+  updatedAt            DateTime         @updatedAt
+  moderatedAt          DateTime?
+  moderationCategories String[]
+  moderationReasons    String[]
+  moderationScore      Float?
+  moderationStatus     ModerationStatus @default(PENDING)
+  moderationSummary    String?
+  bookmarks            Bookmark[]
+  postedBy             User             @relation(fields: [postedById], references: [id])
+}
+
+model Bookmark {
+  id            String       @id @default(cuid())
+  userId        String
+  noteId        String?
+  createdAt     DateTime     @default(now())
+  opportunityId String?
+  pyqId         String?
+  note          Note?        @relation(fields: [noteId], references: [id])
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  pyq           PYQ?         @relation(fields: [pyqId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+}
+
 enum UserRole {
   STUDENT
   FACULTY
@@ -32,337 +173,4 @@ enum ModerationStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-enum AssignmentPriority {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum AssignmentStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-}
-
-enum NotificationType {
-  DEADLINE
-  MODERATION
-  SYSTEM
-  RESOURCE
-}
-
-model Department {
-  id   String         @id @default(cuid())
-  name String         @unique
-  code String         @unique
-  type DepartmentType
-
-  users    User[]
-  subjects Subject[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Subject {
-  id String @id @default(cuid())
-
-  name String
-  code String @unique
-
-  semester Int
-
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [id])
-
-  notes          Note[]
-  pyqs           PYQ[]
-  flashcardDecks FlashcardDeck[]
-  quizzes        Quiz[]
-  assignments    Assignment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model User {
-  id String @id @default(cuid())
-
-  enrollmentNumber String @unique
-  fullName         String
-  email            String @unique
-  password         String
-
-  phone String?
-
-  college  String?
-  branch   String?
-  year     Int?
-  semester Int?
-  section  String?
-
-  profileImage String?
-
-  github   String?
-  linkedin String?
-
-  bio String?
-
-  skills String[]
-
-  role UserRole @default(STUDENT)
-
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-
-  notes          Note[]
-  pyqs           PYQ[]
-  opportunities  Opportunity[]
-  bookmarks      Bookmark[]
-  flashcardDecks FlashcardDeck[]
-  quizzes        Quiz[]
-  quizAttempts   QuizAttempt[]
-  assignments    Assignment[]
-  notifications  Notification[]
-
-  isVerified Boolean @default(false)
-  isActive   Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([enrollmentNumber])
-}
-
-model Note {
-  id String @id @default(cuid())
-
-  title       String
-  description String?
-
-  subjectId String
-  subject   Subject @relation(fields: [subjectId], references: [id])
-  semester  Int
-  branch    String
-
-  pdfUrl    String
-  thumbnail String?
-
-  downloads Int @default(0)
-
-  isApproved Boolean @default(false)
-  isPublic   Boolean @default(false)
-
-  moderationStatus     ModerationStatus @default(PENDING)
-  moderationScore      Float?
-  moderationReasons    String[]
-  moderationCategories String[]
-  moderationSummary    String?
-  moderatedAt          DateTime?
-
-  uploadedById String
-  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
-
-  summary        NoteSummary?
-  flashcardDecks FlashcardDeck[]
-  quizzes        Quiz[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  bookmarks Bookmark[]
-}
-
-model NoteSummary {
-  id                 String   @id @default(cuid())
-  noteId             String   @unique
-  note               Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  summary            String
-  keyConcepts        String[]
-  bulletPoints       String[]
-  readingTimeMinutes Int      @default(3)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-}
-
-model FlashcardDeck {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  subjectId   String?
-  subject     Subject?    @relation(fields: [subjectId], references: [id])
-  noteId      String?
-  note        Note?       @relation(fields: [noteId], references: [id])
-  createdById String
-  createdBy   User        @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  cards       Flashcard[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-}
-
-model Flashcard {
-  id          String        @id @default(cuid())
-  deckId      String
-  deck        FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  question    String
-  answer      String
-  explanation String?
-  order       Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-}
-
-model Quiz {
-  id          String         @id @default(cuid())
-  title       String
-  description String?
-  topic       String
-  difficulty  String         @default("MEDIUM")
-  subjectId   String?
-  subject     Subject?       @relation(fields: [subjectId], references: [id])
-  noteId      String?
-  note        Note?          @relation(fields: [noteId], references: [id])
-  createdById String
-  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  questions   QuizQuestion[]
-  attempts    QuizAttempt[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-}
-
-model QuizQuestion {
-  id            String   @id @default(cuid())
-  quizId        String
-  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  question      String
-  options       String[]
-  correctOption Int
-  explanation   String?
-  order         Int      @default(0)
-  createdAt     DateTime @default(now())
-}
-
-model QuizAttempt {
-  id             String   @id @default(cuid())
-  quizId         String
-  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  score          Int
-  totalQuestions Int
-  answers        Json?
-  completedAt    DateTime @default(now())
-}
-
-model Assignment {
-  id          String             @id @default(cuid())
-  userId      String
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  subjectId   String?
-  subject     Subject?           @relation(fields: [subjectId], references: [id])
-  dueDate     DateTime
-  priority    AssignmentPriority @default(MEDIUM)
-  status      AssignmentStatus   @default(PENDING)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-}
-
-model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String
-  message   String
-  type      NotificationType @default(SYSTEM)
-  isRead    Boolean          @default(false)
-  link      String?
-  createdAt DateTime         @default(now())
-}
-
-model PYQ {
-  id String @id @default(cuid())
-
-  title String
-
-  subjectId String
-  subject   Subject @relation(fields: [subjectId], references: [id])
-
-  semester Int
-  branch   String
-  year     Int
-
-  pdfUrl String
-
-  downloads Int @default(0)
-
-  moderationStatus     ModerationStatus @default(PENDING)
-  moderationScore      Float?
-  moderationReasons    String[]
-  moderationCategories String[]
-  moderationSummary    String?
-  moderatedAt          DateTime?
-
-  uploadedById String
-  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  bookmarks Bookmark[]
-}
-
-model Opportunity {
-  id String @id @default(cuid())
-
-  title       String
-  description String
-
-  company String?
-
-  location String?
-
-  type OpportunityType
-
-  applyLink String?
-
-  deadline DateTime?
-
-  isActive Boolean @default(false)
-
-  moderationStatus     ModerationStatus @default(PENDING)
-  moderationScore      Float?
-  moderationReasons    String[]
-  moderationCategories String[]
-  moderationSummary    String?
-  moderatedAt          DateTime?
-
-  postedById String
-  postedBy   User   @relation(fields: [postedById], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  bookmarks Bookmark[]
-}
-
-model Bookmark {
-  id String @id @default(cuid())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  noteId String?
-  note   Note?   @relation(fields: [noteId], references: [id])
-
-  pyqId String?
-  pyq   PYQ?    @relation(fields: [pyqId], references: [id])
-
-  opportunityId String?
-  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
-
-  createdAt DateTime @default(now())
 }

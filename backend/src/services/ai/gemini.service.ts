@@ -47,12 +47,90 @@ interface AIContext {
   }>;
 }
 
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const isTemporaryGeminiError = (error: any): boolean => {
+  const status = error?.status;
+  const errorMessage = String(error?.message || "").toLowerCase();
+
+  return (
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    errorMessage.includes("high demand") ||
+    errorMessage.includes("unavailable") ||
+    errorMessage.includes("overloaded") ||
+    errorMessage.includes("temporarily")
+  );
+};
+
+async function generateWithFallback(prompt: string): Promise<string> {
+  const models = [
+    "gemini-3.6-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+  ];
+
+  let lastError: any = null;
+
+  for (const model of models) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(
+          `AI request: model=${model}, attempt=${attempt}`
+        );
+
+        const response = await ai.models.generateContent({
+          model,
+          contents: prompt,
+        });
+
+        const text = response?.text;
+
+        if (!text) {
+          throw new Error(
+            `Gemini returned an empty response from ${model}`
+          );
+        }
+
+        console.log(
+          `AI response generated using ${model}`
+        );
+
+        return text;
+      } catch (error: any) {
+        lastError = error;
+
+        console.error(
+          `Gemini error: model=${model}, attempt=${attempt}, status=${error?.status}`
+        );
+
+        if (!isTemporaryGeminiError(error)) {
+          throw error;
+        }
+
+        if (attempt < 2) {
+          await sleep(1200);
+        }
+      }
+    }
+
+    console.warn(
+      `Model ${model} unavailable. Trying fallback model...`
+    );
+  }
+
+  throw lastError || new Error("All Gemini models failed");
+}
+
 export async function generateAIResponse(
   message: string,
   context?: AIContext
 ): Promise<string> {
-  try {
-    const prompt = `
+  const prompt = `
 You are Elaris AI, an intelligent campus assistant.
 
 Your job is to help students with:
@@ -71,27 +149,30 @@ IMPORTANT RULES:
 
 1. Give clear and useful answers.
 2. Personalize responses using the student's context when relevant.
+
 3. RESOURCE ACCURACY:
-   When the student asks about notes, PYQs, internships, jobs,
-   hackathons, events, or other campus resources, use ONLY the
-   resources provided in AVAILABLE CAMPUS NOTES, AVAILABLE PYQs,
-   and AVAILABLE OPPORTUNITIES.
+When the student asks about notes, PYQs, internships,
+jobs, hackathons, events, or other campus resources,
+use ONLY the resources provided in the available campus data.
 
-4. If a resource list is non-empty, explicitly mention the resources
-   that are actually present.
+4. If a resource list is non-empty, explicitly mention
+resources that are actually present.
 
-5. Never say "there are no resources" when the corresponding
-   campus data contains resources.
+5. Never invent resource titles, companies, subjects,
+years, deadlines, or other campus information.
 
 6. If the requested category contains no matching resources,
-   clearly say that no matching resource was found.
+clearly say that no matching resource was found.
 
-7. Do not invent resource titles, companies, subjects, years,
-   deadlines, or other campus information.
-8. Use simple formatting with headings or bullet points when helpful.
+7. For general academic questions, answer using your
+general knowledge.
+
+8. Use simple formatting with headings or bullet points
+when helpful.
 
 STUDENT CONTEXT:
 ${JSON.stringify(context?.user ?? {}, null, 2)}
+
 AVAILABLE CAMPUS NOTES:
 ${JSON.stringify(
   (context?.notes ?? []).map((note) => ({
@@ -138,18 +219,8 @@ ${message}
 Now answer the student's question as Elaris AI.
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
-      contents: prompt,
-    });
-
-    const text = response.text;
-
-    if (!text) {
-      throw new Error("Gemini returned an empty response");
-    }
-
-    return text;
+  try {
+    return await generateWithFallback(prompt);
   } catch (error: any) {
     console.error("=================================");
     console.error("GEMINI API ERROR");
