@@ -7,6 +7,7 @@ import {
   Bookmark,
   User,
   Bot,
+  UploadCloud,
 } from "lucide-react";
 
 const navItems = [
@@ -30,6 +31,11 @@ const navItems = [
     path: "/opportunities",
     icon: Briefcase,
   },
+  {
+  label: "Upload Center",
+  path: "/upload",
+  icon: UploadCloud,
+},
   {
     label: "Bookmarks",
     path: "/bookmarks",

@@ -13,6 +13,7 @@ import departmentRoutes from "./departments/department.routes";
 import subjectRoutes from "./subjects/subject.routes";
 import bookmarkRoutes from "./bookmarks/bookmark.routes";
 import aiRoutes from "./ai/ai.routes.js";
+import downloadRoutes from "./downloads/download.routes";
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use("/departments", departmentRoutes);
 router.use("/subjects", subjectRoutes);
 router.use("/bookmarks", bookmarkRoutes);
 router.use("/ai", aiRoutes);
+router.use("/downloads", downloadRoutes);
 
 router.get("/test-ai", (_req, res) => {
   res.json({

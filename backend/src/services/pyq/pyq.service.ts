@@ -141,6 +141,10 @@ This is a previous-year university examination question paper.
 
 export const getAllPYQs = async () => {
   return prisma.pYQ.findMany({
+    where: {
+      moderationStatus: "APPROVED",
+    },
+
     include: {
       subject: true,
 

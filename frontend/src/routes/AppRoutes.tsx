@@ -14,6 +14,7 @@ import Bookmarks from "../pages/dashboard/Bookmarks";
 import Profile from "../pages/dashboard/Profile";
 
 import AIAssistant from "../pages/ai/AIAssistant";
+import UploadCenter from "../pages/dashboard/UploadCenter";
 
 const ProtectedRoute = ({
   children,
@@ -94,7 +95,16 @@ export default function AppRoutes() {
       <Route
         path="*"
         element={<Navigate to="/dashboard" replace />}
+
+        
+      />
+
+      <Route
+        path="/upload"
+        element={<UploadCenter />}
       />
     </Routes>
+
+
   );
 }

@@ -27,7 +27,7 @@ export const uploadFile = (
 
       type: req.file.mimetype,
 
-      url: `/uploads/${folder}/${req.file.filename}`,
+      url: `/api/v1/downloads/${folder}/${req.file.filename}`,
     },
   });
 };

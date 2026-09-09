@@ -16,7 +16,7 @@ const router = Router();
 router.post(
   "/",
   authenticate,
-  authorize("ADMIN", "FACULTY"),
+  authorize("ADMIN", "FACULTY", "STUDENT"),
   createNoteController
 );
 

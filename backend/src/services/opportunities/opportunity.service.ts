@@ -130,6 +130,11 @@ ${data.applyLink || "Not specified"}
 
 export const getAllOpportunities = async () => {
   return prisma.opportunity.findMany({
+    where: {
+      isActive: true,
+      moderationStatus: "APPROVED",
+    },
+
     include: {
       postedBy: {
         select: {
