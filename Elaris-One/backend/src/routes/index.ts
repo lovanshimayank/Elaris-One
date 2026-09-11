@@ -13,8 +13,9 @@ import departmentRoutes from "./departments/department.routes";
 import subjectRoutes from "./subjects/subject.routes";
 import bookmarkRoutes from "./bookmarks/bookmark.routes";
 import aiRoutes from "./ai/ai.routes.js";
+import adminRoutes from "./admin/admin.routes.js";
 
-const router = Router();
+const router = Router(); 
 
 router.use("/users", userRoutes);
 router.use("/auth", authRoutes);
@@ -28,6 +29,8 @@ router.use("/departments", departmentRoutes);
 router.use("/subjects", subjectRoutes);
 router.use("/bookmarks", bookmarkRoutes);
 router.use("/ai", aiRoutes);
+router.use("/admin", adminRoutes);
+
 
 router.get("/test-ai", (_req, res) => {
   res.json({

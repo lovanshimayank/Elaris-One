@@ -8,9 +8,19 @@ import {
   User,
   Bot,
   UploadCloud,
+  ShieldCheck,
 } from "lucide-react";
 
-const navItems = [
+import { useAuth } from "../../context/AuthContext";
+
+interface NavItem {
+  label: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
   {
     label: "Dashboard",
     path: "/dashboard",
@@ -32,10 +42,10 @@ const navItems = [
     icon: Briefcase,
   },
   {
-  label: "Upload Center",
-  path: "/upload",
-  icon: UploadCloud,
-},
+    label: "Upload Center",
+    path: "/upload",
+    icon: UploadCloud,
+  },
   {
     label: "Bookmarks",
     path: "/bookmarks",
@@ -51,9 +61,28 @@ const navItems = [
     path: "/profile",
     icon: User,
   },
+ {
+  label: "Admin Dashboard",
+  path: "/admin/dashboard",
+  icon: ShieldCheck,
+  adminOnly: true,
+},
+{
+  label: "Admin Moderation",
+  path: "/admin/moderation",
+  icon: ShieldCheck,
+  adminOnly: true,
+},
 ];
 
 export default function Sidebar() {
+  const { user } = useAuth();
+
+  const visibleNavItems = navItems.filter(
+    (item) =>
+      !item.adminOnly || user?.role === "ADMIN"
+  );
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -66,7 +95,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
 
           return (

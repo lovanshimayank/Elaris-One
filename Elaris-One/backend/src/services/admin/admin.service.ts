@@ -11,6 +11,7 @@ export async function getAdminMetrics() {
     totalDecks,
     pendingNotes,
     pendingPYQs,
+    pendingOpportunities,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.note.count(),
@@ -20,6 +21,7 @@ export async function getAdminMetrics() {
     prisma.flashcardDeck.count(),
     prisma.note.count({ where: { moderationStatus: "PENDING" } }),
     prisma.pYQ.count({ where: { moderationStatus: "PENDING" } }),
+    prisma.opportunity.count({where: {moderationStatus: "PENDING",},}),
   ]);
 
   return {
@@ -29,7 +31,10 @@ export async function getAdminMetrics() {
     totalOpportunities,
     totalQuizzes,
     totalDecks,
-    pendingModerations: pendingNotes + pendingPYQs,
+    pendingModerations:
+  pendingNotes +
+  pendingPYQs +
+  pendingOpportunities,
     systemHealth: {
       status: "OPTIMAL",
       database: "CONNECTED",
@@ -95,36 +100,69 @@ export async function updateUserRole(userId: string, role: UserRole) {
 }
 
 export async function getPendingModerations() {
-  const [notes, pyqs] = await Promise.all([
+  const [notes, pyqs, opportunities] = await Promise.all([
     prisma.note.findMany({
       where: { moderationStatus: "PENDING" },
       include: {
         subject: true,
-        uploadedBy: { select: { fullName: true, email: true } },
+        uploadedBy: {
+          select: {
+            fullName: true,
+            email: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     }),
+
     prisma.pYQ.findMany({
       where: { moderationStatus: "PENDING" },
       include: {
         subject: true,
-        uploadedBy: { select: { fullName: true, email: true } },
+        uploadedBy: {
+          select: {
+            fullName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+
+    prisma.opportunity.findMany({
+      where: { moderationStatus: "PENDING" },
+      include: {
+        postedBy: {
+          select: {
+            fullName: true,
+            email: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     }),
   ]);
 
-  return { notes, pyqs };
+  return {
+    notes,
+    pyqs,
+    opportunities,
+  };
 }
-
 export async function resolveModeration(params: {
-  itemType: "note" | "pyq";
+  itemType: "note" | "pyq" | "opportunity";
   itemId: string;
   status: ModerationStatus;
   reasons?: string[];
   summary?: string;
 }) {
-  const { itemType, itemId, status, reasons, summary } = params;
+  const {
+    itemType,
+    itemId,
+    status,
+    reasons,
+    summary,
+  } = params;
 
   if (itemType === "note") {
     return await prisma.note.update({
@@ -135,18 +173,34 @@ export async function resolveModeration(params: {
         isPublic: status === "APPROVED",
         moderatedAt: new Date(),
         moderationReasons: reasons || [],
-        moderationSummary: summary || `Admin moderation: ${status}`,
+        moderationSummary:
+          summary || `Admin moderation: ${status}`,
       },
     });
-  } else {
+  }
+
+  if (itemType === "pyq") {
     return await prisma.pYQ.update({
       where: { id: itemId },
       data: {
         moderationStatus: status,
         moderatedAt: new Date(),
         moderationReasons: reasons || [],
-        moderationSummary: summary || `Admin moderation: ${status}`,
+        moderationSummary:
+          summary || `Admin moderation: ${status}`,
       },
     });
   }
+
+  return await prisma.opportunity.update({
+    where: { id: itemId },
+    data: {
+      moderationStatus: status,
+      isActive: status === "APPROVED",
+      moderatedAt: new Date(),
+      moderationReasons: reasons || [],
+      moderationSummary:
+        summary || `Admin moderation: ${status}`,
+    },
+  });
 }

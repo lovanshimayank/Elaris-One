@@ -1,7 +1,6 @@
 import { Router } from "express";
 
 import authRoutes from "./auth/auth.routes.js";
-
 import userRoutes from "./users/user.routes";
 import noteRoutes from "./notes/note.routes.js";
 import pyqRoutes from "./pyqs/pyq.routes.js";
@@ -9,11 +8,12 @@ import opportunityRoutes from "./opportunities/opportunity.routes.js";
 import dashboardRoutes from "./dashboard/dashboard.routes.js";
 import searchRoutes from "./search/search.routes.js";
 import uploadRoutes from "./uploads/upload.routes";
-import departmentRoutes from "./departments/department.routes";
-import subjectRoutes from "./subjects/subject.routes";
-import bookmarkRoutes from "./bookmarks/bookmark.routes";
+import departmentRoutes from "./departments/department.routes.js";
+import subjectRoutes from "./subjects/subject.routes.js";
+import bookmarkRoutes from "./bookmarks/bookmark.routes.js";
 import aiRoutes from "./ai/ai.routes.js";
-import downloadRoutes from "./downloads/download.routes";
+import downloadRoutes from "./downloads/download.routes.js";
+import adminRoutes from "./admin/admin.routes.js";
 
 const router = Router();
 
@@ -30,6 +30,9 @@ router.use("/subjects", subjectRoutes);
 router.use("/bookmarks", bookmarkRoutes);
 router.use("/ai", aiRoutes);
 router.use("/downloads", downloadRoutes);
+
+// ADMIN ROUTES
+router.use("/admin", adminRoutes);
 
 router.get("/test-ai", (_req, res) => {
   res.json({

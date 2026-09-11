@@ -15,6 +15,9 @@ import Profile from "../pages/dashboard/Profile";
 
 import AIAssistant from "../pages/ai/AIAssistant";
 import UploadCenter from "../pages/dashboard/UploadCenter";
+import AdminModeration from "../pages/admin/AdminModeration";
+import AdminDashboard from "../pages/admin/AdminDashboard";
+
 
 const ProtectedRoute = ({
   children,
@@ -103,6 +106,11 @@ export default function AppRoutes() {
         path="/upload"
         element={<UploadCenter />}
       />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route
+  path="/admin/moderation"
+  element={<AdminModeration />}
+/>
     </Routes>
 
 
