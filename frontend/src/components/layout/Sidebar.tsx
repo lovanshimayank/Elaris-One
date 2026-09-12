@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+﻿import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   BookOpen,
@@ -9,6 +9,7 @@ import {
   Bot,
   UploadCloud,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -61,18 +62,24 @@ const navItems: NavItem[] = [
     path: "/profile",
     icon: User,
   },
- {
-  label: "Admin Dashboard",
-  path: "/admin/dashboard",
-  icon: ShieldCheck,
-  adminOnly: true,
-},
-{
-  label: "Admin Moderation",
-  path: "/admin/moderation",
-  icon: ShieldCheck,
-  adminOnly: true,
-},
+  {
+    label: "Admin Dashboard",
+    path: "/admin/dashboard",
+    icon: ShieldCheck,
+    adminOnly: true,
+  },
+  {
+    label: "User Management",
+    path: "/admin/users",
+    icon: Users,
+    adminOnly: true,
+  },
+  {
+    label: "Admin Moderation",
+    path: "/admin/moderation",
+    icon: ShieldCheck,
+    adminOnly: true,
+  },
 ];
 
 export default function Sidebar() {
