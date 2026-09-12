@@ -7,6 +7,7 @@ import {
   Briefcase,
   AlertCircle,
   ExternalLink,
+  ShieldAlert,
 } from "lucide-react";
 
 import api from "../../api/axios";
@@ -76,6 +77,23 @@ interface ModerationQueue {
 
 type Tab = "notes" | "pyqs" | "opportunities";
 
+type RejectTarget = {
+  itemType: "note" | "pyq" | "opportunity";
+  itemId: string;
+  title: string;
+} | null;
+
+const REJECTION_REASONS = [
+  "Inappropriate content",
+  "Incorrect or irrelevant content",
+  "Duplicate submission",
+  "Poor-quality or incomplete document",
+  "Invalid academic material",
+  "Misleading information",
+  "Promotional or spam content",
+  "Other",
+];
+
 export default function AdminModeration() {
   const { user, loading: authLoading } = useAuth();
 
@@ -89,6 +107,14 @@ export default function AdminModeration() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+
+  const [rejectTarget, setRejectTarget] =
+    useState<RejectTarget>(null);
+
+  const [selectedReasons, setSelectedReasons] =
+    useState<string[]>([]);
+
+  const [adminNote, setAdminNote] = useState("");
 
   const loadQueue = async () => {
     try {
@@ -120,10 +146,9 @@ export default function AdminModeration() {
     }
   }, [authLoading, user]);
 
-  const resolveItem = async (
+  const approveItem = async (
     itemType: "note" | "pyq" | "opportunity",
-    itemId: string,
-    status: "APPROVED" | "REJECTED"
+    itemId: string
   ) => {
     try {
       setProcessingId(itemId);
@@ -132,29 +157,87 @@ export default function AdminModeration() {
       await api.post("/admin/moderation/resolve", {
         itemType,
         itemId,
-        status,
-        reasons:
-          status === "REJECTED"
-            ? ["Rejected by administrator"]
-            : [],
-        summary:
-          status === "APPROVED"
-            ? "Approved by administrator."
-            : "Rejected by administrator.",
+        status: "APPROVED",
+        reasons: [],
+        summary: "Approved by administrator.",
       });
 
       await loadQueue();
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-          `Failed to ${status.toLowerCase()} item.`
+          "Failed to approve item."
       );
     } finally {
       setProcessingId(null);
     }
   };
 
-  if (authLoading) {
+  const openRejectModal = (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => {
+    setRejectTarget({
+      itemType,
+      itemId,
+      title,
+    });
+
+    setSelectedReasons([]);
+    setAdminNote("");
+    setError("");
+  };
+
+  const closeRejectModal = () => {
+    if (processingId) return;
+
+    setRejectTarget(null);
+    setSelectedReasons([]);
+    setAdminNote("");
+  };
+
+  const toggleReason = (reason: string) => {
+    setSelectedReasons((current) =>
+      current.includes(reason)
+        ? current.filter((item) => item !== reason)
+        : [...current, reason]
+    );
+  };
+
+  const rejectItem = async () => {
+    if (!rejectTarget || selectedReasons.length === 0) {
+      return;
+    }
+
+    try {
+      setProcessingId(rejectTarget.itemId);
+      setError("");
+
+      const summary =
+        adminNote.trim() ||
+        `Rejected by administrator: ${selectedReasons.join(", ")}`;
+
+      await api.post("/admin/moderation/resolve", {
+        itemType: rejectTarget.itemType,
+        itemId: rejectTarget.itemId,
+        status: "REJECTED",
+        reasons: selectedReasons,
+        summary,
+      });
+
+      closeRejectModal();
+      await loadQueue();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to reject item."
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  };
+if (authLoading) {
     return (
       <div className="admin-page">
         <div className="admin-loading">Loading...</div>
@@ -273,7 +356,8 @@ export default function AdminModeration() {
 
       {loading ? (
         <div className="admin-empty">
-          <RefreshCw size={28} className="admin-spin" />
+          <RefreshCw size={28}
+className="admin-spin" />
           <p>Loading moderation queue...</p>
         </div>
       ) : (
@@ -288,7 +372,8 @@ export default function AdminModeration() {
                     key={item.id}
                     item={item}
                     processing={processingId === item.id}
-                    onResolve={resolveItem}
+                    onApprove={approveItem}
+                    onReject={openRejectModal}
                   />
                 ))
               )}
@@ -305,7 +390,8 @@ export default function AdminModeration() {
                     key={item.id}
                     item={item}
                     processing={processingId === item.id}
-                    onResolve={resolveItem}
+                    onApprove={approveItem}
+                    onReject={openRejectModal}
                   />
                 ))
               )}
@@ -322,13 +408,27 @@ export default function AdminModeration() {
                     key={item.id}
                     item={item}
                     processing={processingId === item.id}
-                    onResolve={resolveItem}
+                    onApprove={approveItem}
+                    onReject={openRejectModal}
                   />
                 ))
               )}
             </div>
           )}
         </>
+      )}
+
+      {rejectTarget && (
+        <RejectModal
+          target={rejectTarget}
+          selectedReasons={selectedReasons}
+          adminNote={adminNote}
+          processing={processingId === rejectTarget.itemId}
+          onToggleReason={toggleReason}
+          onAdminNoteChange={setAdminNote}
+          onCancel={closeRejectModal}
+          onConfirm={rejectItem}
+        />
       )}
     </div>
   );
@@ -384,29 +484,37 @@ function AIInfo({
     </div>
   );
 }
+type ActionButtonsProps = {
+  itemType: "note" | "pyq" | "opportunity";
+  itemId: string;
+  title: string;
+  processing: boolean;
+  onApprove: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string
+  ) => void;
+  onReject: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => void;
+};
 
 function ActionButtons({
   itemType,
   itemId,
+  title,
   processing,
-  onResolve,
-}: {
-  itemType: "note" | "pyq" | "opportunity";
-  itemId: string;
-  processing: boolean;
-  onResolve: (
-    itemType: "note" | "pyq" | "opportunity",
-    itemId: string,
-    status: "APPROVED" | "REJECTED"
-  ) => void;
-}) {
+  onApprove,
+  onReject,
+}: ActionButtonsProps) {
   return (
     <div className="admin-actions">
       <button
         className="admin-reject"
         disabled={processing}
         onClick={() =>
-          onResolve(itemType, itemId, "REJECTED")
+          onReject(itemType, itemId, title)
         }
       >
         <XCircle size={17} />
@@ -417,7 +525,7 @@ function ActionButtons({
         className="admin-approve"
         disabled={processing}
         onClick={() =>
-          onResolve(itemType, itemId, "APPROVED")
+          onApprove(itemType, itemId)
         }
       >
         <CheckCircle size={17} />
@@ -430,11 +538,13 @@ function ActionButtons({
 function NoteCard({
   item,
   processing,
-  onResolve,
+  onApprove,
+  onReject,
 }: {
   item: NoteItem;
   processing: boolean;
-  onResolve: ActionButtonsProps["onResolve"];
+  onApprove: ActionButtonsProps["onApprove"];
+  onReject: ActionButtonsProps["onReject"];
 }) {
   return (
     <article className="admin-card">
@@ -482,8 +592,10 @@ function NoteCard({
           <ActionButtons
             itemType="note"
             itemId={item.id}
+            title={item.title}
             processing={processing}
-            onResolve={onResolve}
+            onApprove={onApprove}
+            onReject={onReject}
           />
         </div>
       </div>
@@ -494,11 +606,13 @@ function NoteCard({
 function PYQCard({
   item,
   processing,
-  onResolve,
+  onApprove,
+  onReject,
 }: {
   item: PYQItem;
   processing: boolean;
-  onResolve: ActionButtonsProps["onResolve"];
+  onApprove: ActionButtonsProps["onApprove"];
+  onReject: ActionButtonsProps["onReject"];
 }) {
   return (
     <article className="admin-card">
@@ -541,23 +655,26 @@ function PYQCard({
           <ActionButtons
             itemType="pyq"
             itemId={item.id}
+            title={item.title}
             processing={processing}
-            onResolve={onResolve}
+            onApprove={onApprove}
+            onReject={onReject}
           />
         </div>
       </div>
     </article>
   );
 }
-
 function OpportunityCard({
   item,
   processing,
-  onResolve,
+  onApprove,
+  onReject,
 }: {
   item: OpportunityItem;
   processing: boolean;
-  onResolve: ActionButtonsProps["onResolve"];
+  onApprove: ActionButtonsProps["onApprove"];
+  onReject: ActionButtonsProps["onReject"];
 }) {
   return (
     <article className="admin-card">
@@ -613,8 +730,10 @@ function OpportunityCard({
           <ActionButtons
             itemType="opportunity"
             itemId={item.id}
+            title={item.title}
             processing={processing}
-            onResolve={onResolve}
+            onApprove={onApprove}
+            onReject={onReject}
           />
         </div>
       </div>
@@ -622,13 +741,151 @@ function OpportunityCard({
   );
 }
 
-type ActionButtonsProps = {
-  onResolve: (
-    itemType: "note" | "pyq" | "opportunity",
-    itemId: string,
-    status: "APPROVED" | "REJECTED"
-  ) => void;
-};
+function RejectModal({
+  target,
+  selectedReasons,
+  adminNote,
+  processing,
+  onToggleReason,
+  onAdminNoteChange,
+  onCancel,
+  onConfirm,
+}: {
+  target: NonNullable<RejectTarget>;
+  selectedReasons: string[];
+  adminNote: string;
+  processing: boolean;
+  onToggleReason: (reason: string) => void;
+  onAdminNoteChange: (value: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      className="admin-modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onCancel();
+        }
+      }}
+    >
+      <div
+        className="admin-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reject-modal-title"
+      >
+        <div className="admin-modal-header">
+          <div className="admin-modal-icon">
+            <ShieldAlert size={22} />
+          </div>
+
+          <div>
+            <h2 id="reject-modal-title">
+              Reject submission
+            </h2>
+            <p>
+              Select at least one reason for rejecting this
+              content.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="admin-modal-close"
+            onClick={onCancel}
+            disabled={processing}
+            aria-label="Close"
+          >
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        <div className="admin-modal-content">
+          <div className="admin-modal-item">
+            <span>SUBMISSION</span>
+            <strong>{target.title}</strong>
+          </div>
+
+          <div className="admin-rejection-reasons">
+            <span className="admin-modal-label">
+              REJECTION REASONS
+            </span>
+
+            {REJECTION_REASONS.map((reason) => {
+              const selected =
+                selectedReasons.includes(reason);
+
+              return (
+                <label
+                  key={reason}
+                  className={`admin-reason-option ${
+                    selected ? "selected" : ""
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() =>
+                      onToggleReason(reason)
+                    }
+                  />
+
+                  <span>{reason}</span>
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="admin-modal-field">
+            <label htmlFor="admin-rejection-note">
+              Admin note
+              <span>Optional</span>
+            </label>
+
+            <textarea
+              id="admin-rejection-note"
+              value={adminNote}
+              onChange={(event) =>
+                onAdminNoteChange(event.target.value)
+              }
+              placeholder="Add additional context for this decision..."
+              rows={4}
+              maxLength={500}
+            />
+
+            <small>{adminNote.length}/500</small>
+          </div>
+        </div>
+
+        <div className="admin-modal-footer">
+          <button
+            type="button"
+            className="admin-modal-cancel"
+            onClick={onCancel}
+            disabled={processing}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            className="admin-modal-confirm"
+            onClick={onConfirm}
+            disabled={
+              processing || selectedReasons.length === 0
+            }
+          >
+            <XCircle size={17} />
+            {processing
+              ? "Rejecting..."
+              : "Confirm Rejection"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function EmptyState({
   message,
