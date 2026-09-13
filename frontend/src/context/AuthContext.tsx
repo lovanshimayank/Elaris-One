@@ -12,6 +12,7 @@ import api from "../services/api";
 
 interface AuthContextType {
   user: User | null;
+  setUser: (user: User) => void;
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -102,6 +103,7 @@ export const AuthProvider = ({
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         token: null,
         loading,
         login,

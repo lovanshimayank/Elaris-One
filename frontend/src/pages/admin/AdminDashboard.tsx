@@ -10,10 +10,10 @@ import {
   CheckCircle,
   Database,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
-
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 
@@ -96,6 +96,10 @@ export default function AdminDashboard() {
     return (
       <div className="admin-dashboard">
         <div className="admin-dashboard-error">
+          <div className="admin-dashboard-error-icon">
+            <Activity size={22} />
+          </div>
+
           <p>{error || "No dashboard data available."}</p>
 
           <button onClick={loadMetrics}>
@@ -133,7 +137,7 @@ export default function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard-header">
-        <div>
+        <div className="admin-dashboard-heading">
           <span className="admin-eyebrow">
             ADMIN CONTROL CENTER
           </span>
@@ -162,7 +166,7 @@ export default function AdminDashboard() {
       {error && (
         <div className="admin-dashboard-error-banner">
           <Activity size={18} />
-          {error}
+          <span>{error}</span>
         </div>
       )}
 
@@ -179,7 +183,7 @@ export default function AdminDashboard() {
                 <Icon size={21} />
               </div>
 
-              <div>
+              <div className="admin-dashboard-stat-content">
                 <span>{stat.label}</span>
                 <strong>{stat.value}</strong>
               </div>
@@ -189,7 +193,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="admin-dashboard-grid">
-        <section className="admin-dashboard-card">
+        <section className="admin-dashboard-card admin-moderation-card">
           <div className="admin-dashboard-card-header">
             <div>
               <span className="admin-card-label">
@@ -199,7 +203,9 @@ export default function AdminDashboard() {
               <h2>Content Review</h2>
             </div>
 
-            <ShieldCheck size={23} />
+            <div className="admin-dashboard-card-icon">
+              <ShieldCheck size={22} />
+            </div>
           </div>
 
           <div className="admin-pending-number">
@@ -216,7 +222,8 @@ export default function AdminDashboard() {
             className="admin-dashboard-link"
             onClick={() => navigate("/admin/moderation")}
           >
-            Open Moderation Panel →
+            Open Moderation Panel
+            <ArrowRight size={16} />
           </button>
         </section>
 
@@ -230,7 +237,9 @@ export default function AdminDashboard() {
               <h2>Platform Status</h2>
             </div>
 
-            <Activity size={23} />
+            <div className="admin-dashboard-card-icon">
+              <Activity size={22} />
+            </div>
           </div>
 
           <div className="admin-health-list">
@@ -264,10 +273,14 @@ export default function AdminDashboard() {
 
       <section className="admin-dashboard-welcome">
         <div className="admin-dashboard-welcome-icon">
-          <ShieldCheck size={25} />
+          <ShieldCheck size={24} />
         </div>
 
         <div>
+          <span className="admin-welcome-label">
+            ADMIN ACCESS
+          </span>
+
           <h2>Welcome, {user.fullName}</h2>
 
           <p>

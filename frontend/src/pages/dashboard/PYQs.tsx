@@ -38,7 +38,6 @@ function PYQs() {
         setError("");
 
         const response = await api.get("/pyqs");
-
         setPYQs(response.data.data || []);
       } catch (err) {
         console.error("Failed to fetch PYQs:", err);
@@ -75,8 +74,7 @@ function PYQs() {
         pyq.subject?.code?.toLowerCase().includes(searchText);
 
       const matchesSemester =
-        semester === "ALL" ||
-        pyq.semester.toString() === semester;
+        semester === "ALL" || pyq.semester.toString() === semester;
 
       const matchesBranch =
         branch === "ALL" || pyq.branch === branch;
@@ -84,12 +82,7 @@ function PYQs() {
       const matchesYear =
         year === "ALL" || pyq.year.toString() === year;
 
-      return (
-        matchesSearch &&
-        matchesSemester &&
-        matchesBranch &&
-        matchesYear
-      );
+      return matchesSearch && matchesSemester && matchesBranch && matchesYear;
     });
   }, [pyqs, search, semester, branch, year]);
 
@@ -102,324 +95,213 @@ function PYQs() {
 
   if (loading) {
     return (
-      <div style={{ padding: "30px" }}>
-        <h1>Previous Year Questions</h1>
-        <p>Loading PYQs...</p>
+      <div className="pyqs-page">
+        <div className="pyqs-loading">
+          <div className="pyqs-loading-spinner" />
+          <h2>Loading Previous Year Questions</h2>
+          <p>Preparing your question paper library...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "30px" }}>
+    <div className="pyqs-page">
       {/* HEADER */}
-      <div style={{ marginBottom: "24px" }}>
-        <h1 style={{ marginBottom: "6px" }}>
-          Previous Year Questions
-        </h1>
+      <div className="pyqs-header">
+        <div>
+          <span className="pyqs-eyebrow">EXAM PREPARATION</span>
+          <h1>Previous Year Questions</h1>
+          <p>
+            Practice with previous examination papers from your campus
+            community.
+          </p>
+        </div>
 
-        <p style={{ margin: 0, color: "#6b7280" }}>
-          Practice with previous examination papers from your
-          campus community.
-        </p>
+        <div className="pyqs-header-count">
+          <strong>{pyqs.length}</strong>
+          <span>Total Papers</span>
+        </div>
       </div>
 
       {/* ERROR */}
       {error && (
-        <div
-          style={{
-            padding: "12px 16px",
-            marginBottom: "20px",
-            borderRadius: "8px",
-            background: "#fee2e2",
-            color: "#991b1b",
-          }}
-        >
-          {error}
+        <div className="pyqs-error">
+          <span>!</span>
+          <div>
+            <strong>Something went wrong</strong>
+            <p>{error}</p>
+          </div>
         </div>
       )}
 
-      {/* FILTERS */}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search PYQs, subjects, branches..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: "260px",
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "14px",
-          }}
-        />
+      {/* FILTER PANEL */}
+      <div className="pyqs-filter-card">
+        <div className="pyqs-search-wrapper">
+          <span className="pyqs-search-icon">?</span>
+          <input
+            className="pyqs-search"
+            type="text"
+            placeholder="Search PYQs, subjects, branches..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              className="pyqs-search-clear"
+              onClick={() => setSearch("")}
+              type="button"
+            >
+              ×
+            </button>
+          )}
+        </div>
 
-        <select
-          value={semester}
-          onChange={(e) => setSemester(e.target.value)}
-          style={{
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">All Semesters</option>
-          {Array.from({ length: 8 }, (_, index) => (
-            <option key={index + 1} value={index + 1}>
-              Semester {index + 1}
-            </option>
-          ))}
-        </select>
+        <div className="pyqs-select-wrapper">
+          <label>Semester</label>
+          <select
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+          >
+            <option value="ALL">All Semesters</option>
+            {Array.from({ length: 8 }, (_, index) => (
+              <option key={index + 1} value={index + 1}>
+                Semester {index + 1}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <select
-          value={branch}
-          onChange={(e) => setBranch(e.target.value)}
-          style={{
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">All Branches</option>
+        <div className="pyqs-select-wrapper">
+          <label>Branch</label>
+          <select
+            value={branch}
+            onChange={(e) => setBranch(e.target.value)}
+          >
+            <option value="ALL">All Branches</option>
+            {branches.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {branches.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={year}
-          onChange={(e) => setYear(e.target.value)}
-          style={{
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">All Years</option>
-
-          {years.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+        <div className="pyqs-select-wrapper">
+          <label>Year</label>
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+          >
+            <option value="ALL">All Years</option>
+            {years.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {(search ||
           semester !== "ALL" ||
           branch !== "ALL" ||
           year !== "ALL") && (
-          <button
-            onClick={clearFilters}
-            style={{
-              padding: "12px 16px",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              background: "white",
-              cursor: "pointer",
-            }}
-          >
+          <button className="pyqs-clear-button" onClick={clearFilters}>
             Clear Filters
           </button>
         )}
       </div>
 
-      {/* RESULT COUNT */}
-      <p
-        style={{
-          marginBottom: "16px",
-          color: "#6b7280",
-        }}
-      >
-        {filteredPYQs.length} PYQ
-        {filteredPYQs.length !== 1 ? "s" : ""} found
-      </p>
+      {/* RESULTS BAR */}
+      <div className="pyqs-results-bar">
+        <span>
+          <strong>{filteredPYQs.length}</strong>{" "}
+          {filteredPYQs.length === 1 ? "paper" : "papers"} found
+        </span>
 
-      {/* RESULTS */}
+        {(search ||
+          semester !== "ALL" ||
+          branch !== "ALL" ||
+          year !== "ALL") && (
+          <button onClick={clearFilters}>Reset all filters</button>
+        )}
+      </div>
+
+      {/* EMPTY STATE */}
       {filteredPYQs.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "60px 20px",
-            border: "1px dashed #d1d5db",
-            borderRadius: "12px",
-          }}
-        >
+        <div className="pyqs-empty">
+          <div className="pyqs-empty-icon">??</div>
           <h3>No PYQs found</h3>
-
-          <p style={{ color: "#6b7280" }}>
+          <p>
             {pyqs.length === 0
               ? "No previous year questions have been uploaded yet."
               : "Try changing your search or filters."}
           </p>
 
           {pyqs.length > 0 && (
-            <button
-              onClick={clearFilters}
-              style={{
-                marginTop: "10px",
-                padding: "10px 16px",
-                border: "none",
-                borderRadius: "8px",
-                background: "#111827",
-                color: "white",
-                cursor: "pointer",
-              }}
-            >
-              Reset Filters
-            </button>
+            <button onClick={clearFilters}>Reset Filters</button>
           )}
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "20px",
-          }}
-        >
+        /* RESULTS */
+        <div className="pyqs-grid">
           {filteredPYQs.map((pyq) => (
-            <div
-              key={pyq.id}
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: "12px",
-                padding: "20px",
-                background: "white",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-              }}
-            >
-              {/* CARD HEADER */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                }}
-              >
-                <div>
-                  <h3
-                    style={{
-                      margin: "0 0 8px",
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {pyq.title}
-                  </h3>
-
-                  {pyq.subject && (
-                    <p
-                      style={{
-                        margin: 0,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {pyq.subject.name}
-                      {pyq.subject.code
-                        ? ` (${pyq.subject.code})`
-                        : ""}
-                    </p>
-                  )}
+            <article className="pyq-card" key={pyq.id}>
+              <div className="pyq-card-top">
+                <div className="pyq-file-icon">
+                  <span>PDF</span>
                 </div>
 
-                <BookmarkButton
-                  type="pyq"
-                  id={pyq.id}
-                />
+                <BookmarkButton type="pyq" id={pyq.id} />
               </div>
 
-              {/* DETAILS */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "8px",
-                  flexWrap: "wrap",
-                  margin: "16px 0",
-                  fontSize: "13px",
-                }}
-              >
-                <span
-                  style={{
-                    padding: "5px 9px",
-                    borderRadius: "6px",
-                    background: "#f3f4f6",
-                  }}
-                >
-                  Semester {pyq.semester}
-                </span>
+              <div className="pyq-card-body">
+                <h3 className="pyq-title">{pyq.title}</h3>
 
-                <span
-                  style={{
-                    padding: "5px 9px",
-                    borderRadius: "6px",
-                    background: "#f3f4f6",
-                  }}
-                >
-                  {pyq.branch}
-                </span>
+                {pyq.subject && (
+                  <p className="pyq-subject">
+                    {pyq.subject.name}
+                    {pyq.subject.code ? ` · ${pyq.subject.code}` : ""}
+                  </p>
+                )}
 
-                <span
-                  style={{
-                    padding: "5px 9px",
-                    borderRadius: "6px",
-                    background: "#f3f4f6",
-                  }}
-                >
-                  {pyq.year}
-                </span>
+                <div className="pyq-tags">
+                  <span>Sem {pyq.semester}</span>
+                  <span>{pyq.branch}</span>
+                  <span>{pyq.year}</span>
+                </div>
+
+                {pyq.uploadedBy && (
+                  <div className="pyq-uploader">
+                    <div className="pyq-avatar">
+                      {pyq.uploadedBy.fullName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <small>Uploaded by</small>
+                      <strong>{pyq.uploadedBy.fullName}</strong>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {pyq.uploadedBy && (
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#6b7280",
-                    marginBottom: "14px",
-                  }}
-                >
-                  Uploaded by {pyq.uploadedBy.fullName}
-                </p>
-              )}
-
-              {/* PDF */}
               {pyq.pdfUrl && (
-                <a
-                  href={
-                    pyq.pdfUrl.startsWith("http")
-                      ? pyq.pdfUrl
-                      : `http://localhost:5000${pyq.pdfUrl}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-block",
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    background: "#111827",
-                    color: "white",
-                    fontSize: "14px",
-                  }}
-                >
-                  Open PYQ PDF
-                </a>
+                <div className="pyq-card-footer">
+                  <a
+                    href={
+                      pyq.pdfUrl.startsWith("http")
+                        ? pyq.pdfUrl
+                        : `http://localhost:5000${pyq.pdfUrl}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pyq-open-button"
+                  >
+                    Open PYQ PDF
+                    <span>?</span>
+                  </a>
+                </div>
               )}
-            </div>
+            </article>
           ))}
         </div>
       )}

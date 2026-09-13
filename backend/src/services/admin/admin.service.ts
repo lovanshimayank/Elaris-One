@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { UserRole, ModerationStatus } from "@prisma/client";
+import { createNotification } from "../notifications/notification.service.js";
 
 export async function getAdminMetrics() {
   const [
@@ -237,7 +238,7 @@ export async function resolveModeration(params: {
   } = params;
 
   if (itemType === "note") {
-    return await prisma.note.update({
+    const note = await prisma.note.update({
       where: {
         id: itemId,
       },
@@ -256,10 +257,31 @@ export async function resolveModeration(params: {
           `Admin moderation: ${status}`,
       },
     });
+
+    if (status === "APPROVED" || status === "REJECTED") {
+      await createNotification({
+        userId: note.uploadedById,
+        title:
+          status === "APPROVED"
+            ? "Note Approved"
+            : "Note Rejected",
+        message:
+          status === "APPROVED"
+            ? `Your note "${note.title}" has been approved and is now available to students.`
+            : `Your note "${note.title}" was rejected during moderation.`,
+        type:
+          status === "APPROVED"
+            ? "APPROVED"
+            : "REJECTED",
+        link: "/notes",
+      });
+    }
+
+    return note;
   }
 
   if (itemType === "pyq") {
-    return await prisma.pYQ.update({
+    const pyq = await prisma.pYQ.update({
       where: {
         id: itemId,
       },
@@ -276,9 +298,30 @@ export async function resolveModeration(params: {
           `Admin moderation: ${status}`,
       },
     });
+
+    if (status === "APPROVED" || status === "REJECTED") {
+      await createNotification({
+        userId: pyq.uploadedById,
+        title:
+          status === "APPROVED"
+            ? "PYQ Approved"
+            : "PYQ Rejected",
+        message:
+          status === "APPROVED"
+            ? `Your PYQ "${pyq.title}" has been approved and is now available to students.`
+            : `Your PYQ "${pyq.title}" was rejected during moderation.`,
+        type:
+          status === "APPROVED"
+            ? "APPROVED"
+            : "REJECTED",
+        link: "/pyqs",
+      });
+    }
+
+    return pyq;
   }
 
-  return await prisma.opportunity.update({
+  const opportunity = await prisma.opportunity.update({
     where: {
       id: itemId,
     },
@@ -296,6 +339,27 @@ export async function resolveModeration(params: {
         `Admin moderation: ${status}`,
     },
   });
+
+  if (status === "APPROVED" || status === "REJECTED") {
+    await createNotification({
+      userId: opportunity.postedById,
+      title:
+        status === "APPROVED"
+          ? "Opportunity Approved"
+          : "Opportunity Rejected",
+      message:
+        status === "APPROVED"
+          ? `Your opportunity "${opportunity.title}" has been approved and is now visible to students.`
+          : `Your opportunity "${opportunity.title}" was rejected during moderation.`,
+      type:
+        status === "APPROVED"
+          ? "APPROVED"
+          : "REJECTED",
+      link: "/opportunities",
+    });
+  }
+
+  return opportunity;
 }
 
 /**

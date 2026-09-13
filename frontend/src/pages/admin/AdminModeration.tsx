@@ -75,6 +75,30 @@ interface ModerationQueue {
   pyqs: PYQItem[];
   opportunities: OpportunityItem[];
 }
+interface AllContentItem {
+  id: string;
+  title: string;
+  createdAt: string;
+  moderationStatus?: ModerationStatus;
+  subject?: {
+    name: string;
+    code?: string;
+  };
+  semester?: number;
+  branch?: string;
+  year?: number;
+  company?: string | null;
+  type?: string;
+  location?: string | null;
+  uploadedBy?: {
+    fullName: string;
+    email?: string;
+  };
+  postedBy?: {
+    fullName: string;
+    email?: string;
+  };
+}
 
 type Tab = "notes" | "pyqs" | "opportunities";
 
@@ -103,6 +127,23 @@ export default function AdminModeration() {
     pyqs: [],
     opportunities: [],
   });
+  // All content management data
+  const [allContent, setAllContent] =
+  useState<{
+    notes: AllContentItem[];
+    pyqs: AllContentItem[];
+    opportunities: AllContentItem[];
+  }>({
+    notes: [],
+    pyqs: [],
+    opportunities: [],
+  });
+
+  const [selectedContentIds, setSelectedContentIds] =
+    useState<Set<string>>(new Set());
+
+  const [contentDeleting, setContentDeleting] =
+    useState(false);
 
   const [activeTab, setActiveTab] = useState<Tab>("notes");
   const [loading, setLoading] = useState(true);
@@ -140,10 +181,30 @@ export default function AdminModeration() {
       setLoading(false);
     }
   };
+  const loadAllContent = async () => {
+    try {
+      const response = await api.get("/admin/content");
+
+      if (response.data?.success) {
+        setAllContent({
+          notes: response.data.data?.notes || [],
+          pyqs: response.data.data?.pyqs || [],
+          opportunities:
+            response.data.data?.opportunities || [],
+        });
+      }
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to load all content."
+      );
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && user?.role === "ADMIN") {
       loadQueue();
+      loadAllContent();
     }
   }, [authLoading, user]);
 
@@ -178,6 +239,134 @@ export default function AdminModeration() {
       );
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const currentContentItems =
+    allContent[activeTab];
+
+  const selectedContentCount =
+    currentContentItems.filter((item) =>
+      selectedContentIds.has(item.id)
+    ).length;
+
+  const allContentSelected =
+    currentContentItems.length > 0 &&
+    currentContentItems.every((item) =>
+      selectedContentIds.has(item.id)
+    );
+
+  const toggleContentSelection = (id: string) => {
+    setSelectedContentIds((previous) => {
+      const next = new Set(previous);
+
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+
+      return next;
+    });
+  };
+
+  const toggleContentSelectAll = () => {
+    setSelectedContentIds((previous) => {
+      const next = new Set(previous);
+
+      if (allContentSelected) {
+        currentContentItems.forEach((item) => {
+          next.delete(item.id);
+        });
+      } else {
+        currentContentItems.forEach((item) => {
+          next.add(item.id);
+        });
+      }
+
+      return next;
+    });
+  };
+
+  const deleteSelectedContent = async () => {
+    if (selectedContentCount === 0) return;
+
+    const confirmed = window.confirm(
+      `Delete ${selectedContentCount} selected ${activeTab} permanently?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setContentDeleting(true);
+      setError("");
+
+      const endpointMap = {
+        notes: "/admin/notes/bulk",
+        pyqs: "/admin/pyqs/bulk",
+        opportunities:
+          "/admin/opportunities/bulk",
+      };
+
+      const ids = Array.from(selectedContentIds);
+
+      await api.delete(endpointMap[activeTab], {
+        data: { ids },
+      });
+
+      setSelectedContentIds(new Set());
+
+      await loadAllContent();
+      await loadQueue();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to delete selected content."
+      );
+    } finally {
+      setContentDeleting(false);
+    }
+  };
+
+  const deleteAllContentItem = async (
+    itemType: Tab,
+    itemId: string,
+    title: string
+  ) => {
+    const endpointMap = {
+      notes: `/admin/notes/${itemId}`,
+      pyqs: `/admin/pyqs/${itemId}`,
+      opportunities:
+        `/admin/opportunities/${itemId}`,
+    };
+
+    const confirmed = window.confirm(
+      `Delete "${title}" permanently?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setContentDeleting(true);
+      setError("");
+
+      await api.delete(endpointMap[itemType]);
+
+      setSelectedContentIds((previous) => {
+        const next = new Set(previous);
+        next.delete(itemId);
+        return next;
+      });
+
+      await loadAllContent();
+      await loadQueue();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to delete content."
+      );
+    } finally {
+      setContentDeleting(false);
     }
   };
 
@@ -361,7 +550,10 @@ if (authLoading) {
       <div className="admin-tabs">
         <button
           className={activeTab === "notes" ? "active" : ""}
-          onClick={() => setActiveTab("notes")}
+          onClick={() => {
+  setActiveTab("notes");
+  setSelectedContentIds(new Set());
+}}
         >
           <FileText size={17} />
           Notes
@@ -370,7 +562,10 @@ if (authLoading) {
 
         <button
           className={activeTab === "pyqs" ? "active" : ""}
-          onClick={() => setActiveTab("pyqs")}
+          onClick={() => {
+  setActiveTab("pyqs");
+  setSelectedContentIds(new Set());
+}}
         >
           <FileText size={17} />
           PYQs
@@ -381,7 +576,10 @@ if (authLoading) {
           className={
             activeTab === "opportunities" ? "active" : ""
           }
-          onClick={() => setActiveTab("opportunities")}
+          onClick={() => {
+  setActiveTab("opportunities");
+  setSelectedContentIds(new Set());
+}}
         >
           <Briefcase size={17} />
           Opportunities
@@ -455,6 +653,282 @@ className="admin-spin" />
           )}
         </>
       )}
+
+      {/* ALL CONTENT MANAGEMENT */}
+      <section className="admin-all-content">
+        <div className="admin-section-header">
+          <div>
+            <span className="admin-eyebrow">
+              CONTENT MANAGEMENT
+            </span>
+
+            <h2>All Content</h2>
+
+            <p>
+              Manage and permanently delete content
+              across Elaris-One.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="admin-refresh"
+            onClick={loadAllContent}
+            disabled={contentDeleting}
+          >
+            <RefreshCw
+              size={17}
+              className={
+                contentDeleting
+                  ? "admin-spin"
+                  : ""
+              }
+            />
+            Refresh
+          </button>
+        </div>
+
+        {/* CONTENT TABS */}
+        <div className="admin-tabs">
+          <button
+            className={
+              activeTab === "notes" ? "active" : ""
+            }
+            onClick={() => {
+              setActiveTab("notes");
+              setSelectedContentIds(new Set());
+            }}
+          >
+            <FileText size={17} />
+            Notes
+            <span>{allContent.notes.length}</span>
+          </button>
+
+          <button
+            className={
+              activeTab === "pyqs" ? "active" : ""
+            }
+            onClick={() => {
+              setActiveTab("pyqs");
+              setSelectedContentIds(new Set());
+            }}
+          >
+            <FileText size={17} />
+            PYQs
+            <span>{allContent.pyqs.length}</span>
+          </button>
+
+          <button
+            className={
+              activeTab === "opportunities"
+                ? "active"
+                : ""
+            }
+            onClick={() => {
+              setActiveTab("opportunities");
+              setSelectedContentIds(new Set());
+            }}
+          >
+            <Briefcase size={17} />
+            Opportunities
+            <span>
+              {allContent.opportunities.length}
+            </span>
+          </button>
+        </div>
+
+        {/* BULK ACTION BAR */}
+        <div className="admin-bulk-toolbar">
+          <label className="admin-select-all">
+            <input
+              type="checkbox"
+              checked={allContentSelected}
+              onChange={toggleContentSelectAll}
+              disabled={
+                currentContentItems.length === 0 ||
+                contentDeleting
+              }
+            />
+
+            <span>
+              {selectedContentCount > 0
+                ? `${selectedContentCount} selected`
+                : "Select all"}
+            </span>
+          </label>
+
+          {selectedContentCount > 0 && (
+            <button
+              type="button"
+              className="admin-bulk-delete"
+              onClick={deleteSelectedContent}
+              disabled={contentDeleting}
+            >
+              <Trash2 size={17} />
+
+              {contentDeleting
+                ? "Deleting..."
+                : `Delete Selected (${selectedContentCount})`}
+            </button>
+          )}
+        </div>
+
+        {/* ALL CONTENT LIST */}
+        <div className="admin-content-list">
+          {currentContentItems.length === 0 ? (
+            <div className="admin-content-empty">
+              <FileText size={38} />
+
+              <h3>
+                No{" "}
+                {activeTab === "notes"
+                  ? "notes"
+                  : activeTab === "pyqs"
+                  ? "PYQs"
+                  : "opportunities"}{" "}
+                found
+              </h3>
+
+              <p>
+                There is currently no content
+                available in this section.
+              </p>
+            </div>
+          ) : (
+            currentContentItems.map((item) => {
+              const isSelected =
+                selectedContentIds.has(item.id);
+
+              return (
+                <div
+                  key={item.id}
+                  className={
+                    isSelected
+                      ? "admin-content-item selected"
+                      : "admin-content-item"
+                  }
+                >
+                  <label className="admin-content-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() =>
+                        toggleContentSelection(
+                          item.id
+                        )
+                      }
+                      disabled={contentDeleting}
+                    />
+                  </label>
+
+                  <div className="admin-content-item-info">
+                    <h3>{item.title}</h3>
+
+                    <div className="admin-content-meta">
+                      {activeTab === "notes" && (
+                        <>
+                          <span>
+                            {item.subject?.name ||
+                              "Unknown Subject"}
+                          </span>
+
+                          <span>
+                            Semester{" "}
+                            {item.semester}
+                          </span>
+
+                          <span>
+                            {item.branch ||
+                              "All Branches"}
+                          </span>
+                        </>
+                      )}
+
+                      {activeTab === "pyqs" && (
+                        <>
+                          <span>
+                            {item.subject?.name ||
+                              "Unknown Subject"}
+                          </span>
+
+                          <span>
+                            Year {item.year}
+                          </span>
+
+                          <span>
+                            Semester{" "}
+                            {item.semester}
+                          </span>
+                        </>
+                      )}
+
+                      {activeTab ===
+                        "opportunities" && (
+                        <>
+                          <span>
+                            {item.company ||
+                              "Independent"}
+                          </span>
+
+                          <span>
+                            {item.type ||
+                              "Opportunity"}
+                          </span>
+
+                          {item.location && (
+                            <span>
+                              {item.location}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <div className="admin-content-submeta">
+                      Uploaded by{" "}
+                      {item.uploadedBy?.fullName ||
+                        item.postedBy?.fullName ||
+                        "Unknown user"}
+                      {" • "}
+                      {new Date(
+                        item.createdAt
+                      ).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <div className="admin-content-status">
+                    <span
+                      className={`admin-status ${String(
+                        item.moderationStatus ||
+                          "PENDING"
+                      ).toLowerCase()}`}
+                    >
+                      {item.moderationStatus ||
+                        "PENDING"}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="admin-delete"
+                    onClick={() =>
+                      deleteAllContentItem(
+                        activeTab,
+                        item.id,
+                        item.title
+                      )
+                    }
+                    disabled={contentDeleting}
+                  >
+                    <Trash2 size={17} />
+                    Delete
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
 
       {rejectTarget && (
         <RejectModal

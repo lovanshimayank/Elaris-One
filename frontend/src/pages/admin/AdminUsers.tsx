@@ -83,9 +83,7 @@ export default function AdminUsers() {
     loadUsers();
   };
 
-  const toggleStatus = async (
-    targetUser: AdminUser
-  ) => {
+  const toggleStatus = async (targetUser: AdminUser) => {
     try {
       setUpdatingId(targetUser.id);
 
@@ -111,9 +109,7 @@ export default function AdminUsers() {
     targetUser: AdminUser,
     newRole: AdminUser["role"]
   ) => {
-    if (targetUser.role === newRole) {
-      return;
-    }
+    if (targetUser.role === newRole) return;
 
     try {
       setUpdatingId(targetUser.id);
@@ -138,7 +134,7 @@ export default function AdminUsers() {
 
   if (authLoading || loading) {
     return (
-      <div className="admin-page">
+      <div className="admin-page admin-users-page">
         <div className="admin-dashboard-loading">
           <RefreshCw
             size={28}
@@ -152,7 +148,7 @@ export default function AdminUsers() {
 
   if (!user || user.role !== "ADMIN") {
     return (
-      <div className="admin-page">
+      <div className="admin-page admin-users-page">
         <div className="admin-dashboard-denied">
           <ShieldCheck size={42} />
           <h2>Access Denied</h2>
@@ -166,8 +162,8 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="admin-page">
-      <div className="admin-header">
+    <div className="admin-page admin-users-page">
+      <div className="admin-header admin-users-header">
         <div>
           <span className="admin-eyebrow">
             ADMIN CONTROL CENTER
@@ -194,33 +190,48 @@ export default function AdminUsers() {
         </button>
       </div>
 
-      <div className="admin-summary">
-        <div>
-          <Users size={20} />
-          <span>Total Users</span>
-          <strong>{users.length}</strong>
+      <div className="admin-summary admin-users-summary">
+        <div className="admin-summary-card">
+          <div className="admin-summary-icon">
+            <Users size={19} />
+          </div>
+
+          <div>
+            <span>Total Users</span>
+            <strong>{users.length}</strong>
+          </div>
         </div>
 
-        <div>
-          <UserCheck size={20} />
-          <span>Active</span>
-          <strong>
-            {users.filter((item) => item.isActive).length}
-          </strong>
+        <div className="admin-summary-card">
+          <div className="admin-summary-icon admin-summary-icon-success">
+            <UserCheck size={19} />
+          </div>
+
+          <div>
+            <span>Active</span>
+            <strong>
+              {users.filter((item) => item.isActive).length}
+            </strong>
+          </div>
         </div>
 
-        <div>
-          <UserX size={20} />
-          <span>Inactive</span>
-          <strong>
-            {users.filter((item) => !item.isActive).length}
-          </strong>
+        <div className="admin-summary-card">
+          <div className="admin-summary-icon admin-summary-icon-danger">
+            <UserX size={19} />
+          </div>
+
+          <div>
+            <span>Inactive</span>
+            <strong>
+              {users.filter((item) => !item.isActive).length}
+            </strong>
+          </div>
         </div>
       </div>
 
-      <div className="admin-toolbar">
+      <div className="admin-toolbar admin-users-toolbar">
         <form
-          className="admin-search"
+          className="admin-search admin-users-search"
           onSubmit={handleSearch}
         >
           <Search size={18} />
@@ -234,12 +245,10 @@ export default function AdminUsers() {
             placeholder="Search name, email or enrollment..."
           />
 
-          <button type="submit">
-            Search
-          </button>
+          <button type="submit">Search</button>
         </form>
 
-        <div className="admin-filter">
+        <div className="admin-filter admin-users-filter">
           <ChevronDown size={17} />
 
           <select
@@ -258,11 +267,22 @@ export default function AdminUsers() {
 
       {error && (
         <div className="admin-dashboard-error-banner">
-          {error}
+          <span>{error}</span>
         </div>
       )}
 
       <section className="admin-users-card">
+        <div className="admin-users-table-heading">
+          <div>
+            <span>PLATFORM USERS</span>
+            <h2>All Accounts</h2>
+          </div>
+
+          <span className="admin-users-total">
+            {users.length} users
+          </span>
+        </div>
+
         <div className="admin-users-table-wrapper">
           <table className="admin-users-table">
             <thead>
@@ -300,19 +320,16 @@ export default function AdminUsers() {
                         </div>
 
                         <div>
-                          <strong>
-                            {item.fullName}
-                          </strong>
-
-                          <span>
-                            {item.email}
-                          </span>
+                          <strong>{item.fullName}</strong>
+                          <span>{item.email}</span>
                         </div>
                       </div>
                     </td>
 
                     <td>
-                      {item.enrollmentNumber}
+                      <span className="admin-enrollment">
+                        {item.enrollmentNumber}
+                      </span>
                     </td>
 
                     <td>
@@ -333,11 +350,9 @@ export default function AdminUsers() {
                         <option value="STUDENT">
                           Student
                         </option>
-
                         <option value="FACULTY">
                           Faculty
                         </option>
-
                         <option value="ADMIN">
                           Admin
                         </option>
@@ -347,13 +362,13 @@ export default function AdminUsers() {
                     <td>
                       <div className="admin-academic-info">
                         <strong>
-                          {item.branch || "—"}
+                          {item.branch || "â€”"}
                         </strong>
 
                         <span>
                           {item.semester
                             ? `Semester ${item.semester}`
-                            : "Semester —"}
+                            : "Semester â€”"}
                         </span>
                       </div>
                     </td>
@@ -363,7 +378,6 @@ export default function AdminUsers() {
                         <span>
                           {item._count.notes} Notes
                         </span>
-
                         <span>
                           {item._count.pyqs} PYQs
                         </span>
@@ -385,6 +399,7 @@ export default function AdminUsers() {
                           toggleStatus(item)
                         }
                       >
+                        <span className="admin-status-dot" />
                         {item.isActive
                           ? "Active"
                           : "Inactive"}
@@ -392,9 +407,11 @@ export default function AdminUsers() {
                     </td>
 
                     <td>
-                      {new Date(
-                        item.createdAt
-                      ).toLocaleDateString()}
+                      <span className="admin-joined-date">
+                        {new Date(
+                          item.createdAt
+                        ).toLocaleDateString()}
+                      </span>
                     </td>
                   </tr>
                 ))

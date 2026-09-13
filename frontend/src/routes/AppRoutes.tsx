@@ -18,7 +18,6 @@ import UploadCenter from "../pages/dashboard/UploadCenter";
 import AdminModeration from "../pages/admin/AdminModeration";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminUsers from "../pages/admin/AdminUsers";
-import AdminContent from "../pages/admin/AdminContent";
 
 const ProtectedRoute = ({
   children,
@@ -121,10 +120,7 @@ export default function AppRoutes() {
       <Route
         path="/admin/moderation"
         element={<AdminModeration />}
-      /><Route
-  path="/admin/content"
-  element={<AdminContent />}
-/>
+      />
     </Routes>
   );
 }

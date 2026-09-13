@@ -11,6 +11,7 @@ import uploadRoutes from "./uploads/upload.routes";
 import departmentRoutes from "./departments/department.routes.js";
 import subjectRoutes from "./subjects/subject.routes.js";
 import bookmarkRoutes from "./bookmarks/bookmark.routes.js";
+import notificationRoutes from "./notifications/notification.routes.js";
 import aiRoutes from "./ai/ai.routes.js";
 import downloadRoutes from "./downloads/download.routes.js";
 import adminRoutes from "./admin/admin.routes.js";
@@ -28,6 +29,7 @@ router.use("/upload", uploadRoutes);
 router.use("/departments", departmentRoutes);
 router.use("/subjects", subjectRoutes);
 router.use("/bookmarks", bookmarkRoutes);
+router.use("/notifications", notificationRoutes);
 router.use("/ai", aiRoutes);
 router.use("/downloads", downloadRoutes);
 

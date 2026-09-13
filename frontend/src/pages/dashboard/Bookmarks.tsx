@@ -76,16 +76,17 @@ const Bookmarks = () => {
 
   if (loading) {
     return (
-      <div className="page-container">
-        <div className="page-header">
-          <span className="page-eyebrow">SAVED RESOURCES</span>
+      <div className="bookmarks-page">
+        <div className="bookmarks-header">
+          <span className="bookmarks-eyebrow">SAVED RESOURCES</span>
           <h1>Bookmarks</h1>
-          <p>Your saved campus resources.</p>
+          <p>Your saved campus resources, all in one place.</p>
         </div>
 
-        <div className="empty-state">
-          <h3>Loading bookmarks...</h3>
-          <p>Fetching your saved resources.</p>
+        <div className="bookmarks-loading">
+          <div className="bookmarks-spinner" />
+          <h3>Loading bookmarks</h3>
+          <p>Fetching your saved resources...</p>
         </div>
       </div>
     );
@@ -93,21 +94,21 @@ const Bookmarks = () => {
 
   if (error) {
     return (
-      <div className="page-container">
-        <div className="page-header">
-          <span className="page-eyebrow">SAVED RESOURCES</span>
+      <div className="bookmarks-page">
+        <div className="bookmarks-header">
+          <span className="bookmarks-eyebrow">SAVED RESOURCES</span>
           <h1>Bookmarks</h1>
-          <p>Your saved campus resources.</p>
+          <p>Your saved campus resources, all in one place.</p>
         </div>
 
-        <div className="empty-state">
+        <div className="bookmarks-empty bookmarks-error">
+          <div className="bookmarks-empty-icon">!</div>
           <h3>Something went wrong</h3>
           <p>{error}</p>
 
           <button
-            className="primary-button"
+            className="bookmarks-primary-button"
             onClick={fetchBookmarks}
-            style={{ marginTop: "16px" }}
           >
             Try Again
           </button>
@@ -117,57 +118,25 @@ const Bookmarks = () => {
   }
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <span className="page-eyebrow">SAVED RESOURCES</span>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            gap: "20px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <h1>Bookmarks</h1>
-            <p>Quick access to your saved campus resources.</p>
-          </div>
-
-          {bookmarks.length > 0 && (
-            <span
-              style={{
-                padding: "8px 14px",
-                borderRadius: "999px",
-                background: "#eef2ff",
-                color: "#4f46e5",
-                fontSize: "13px",
-                fontWeight: 700,
-              }}
-            >
-              {bookmarks.length} saved
-            </span>
-          )}
+    <div className="bookmarks-page">
+      <div className="bookmarks-header">
+        <div>
+          <span className="bookmarks-eyebrow">SAVED RESOURCES</span>
+          <h1>Bookmarks</h1>
+          <p>Quick access to your saved campus resources.</p>
         </div>
+
+        {bookmarks.length > 0 && (
+          <div className="bookmarks-count">
+            <span>{bookmarks.length}</span>
+            saved
+          </div>
+        )}
       </div>
 
       {bookmarks.length === 0 ? (
-        <div className="empty-state">
-          <div
-            style={{
-              width: "56px",
-              height: "56px",
-              borderRadius: "16px",
-              margin: "0 auto 16px",
-              display: "grid",
-              placeItems: "center",
-              background: "#eef2ff",
-              fontSize: "24px",
-            }}
-          >
-            ★
-          </div>
+        <div className="bookmarks-empty">
+          <div className="bookmarks-empty-icon">â˜…</div>
 
           <h3>No bookmarks yet</h3>
 
@@ -176,7 +145,7 @@ const Bookmarks = () => {
           </p>
         </div>
       ) : (
-        <div className="opportunities-grid">
+        <div className="bookmarks-grid">
           {bookmarks.map((bookmark) => {
             const resource =
               bookmark.note ||
@@ -188,132 +157,105 @@ const Bookmarks = () => {
             const type = getResourceType(bookmark);
 
             return (
-              <div className="opportunity-card" key={bookmark.id}>
-                <div className="opportunity-top">
-                  <span className="opportunity-type">
+              <article className="bookmark-card" key={bookmark.id}>
+                <div className="bookmark-card-top">
+                  <span
+                    className={`bookmark-type bookmark-type-${type.toLowerCase()}`}
+                  >
                     {type}
                   </span>
 
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      color: "#9ca3af",
-                    }}
-                  >
-                    ★ Saved
+                  <span className="bookmark-saved">
+                    â˜… Saved
                   </span>
                 </div>
 
-                <h2>{resource.title}</h2>
+                <div className="bookmark-content">
+                  <h2>{resource.title}</h2>
 
-                {bookmark.opportunity?.company && (
-                  <p className="opportunity-company">
-                    {bookmark.opportunity.company}
-                  </p>
-                )}
-
-                {"description" in resource &&
-                  resource.description && (
-                    <p className="opportunity-description">
-                      {resource.description}
+                  {bookmark.opportunity?.company && (
+                    <p className="bookmark-company">
+                      {bookmark.opportunity.company}
                     </p>
                   )}
 
-                {bookmark.pyq && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "8px",
-                      margin: "14px 0",
-                    }}
-                  >
-                    <span className="resource-tag">
-                      Semester {bookmark.pyq.semester}
-                    </span>
+                  {"description" in resource &&
+                    resource.description && (
+                      <p className="bookmark-description">
+                        {resource.description}
+                      </p>
+                    )}
 
-                    <span className="resource-tag">
-                      {bookmark.pyq.branch}
-                    </span>
-
-                    <span className="resource-tag">
-                      {bookmark.pyq.year}
-                    </span>
-                  </div>
-                )}
-
-                {bookmark.opportunity?.location && (
-                  <p className="opportunity-meta">
-                    <strong>Location:</strong>{" "}
-                    {bookmark.opportunity.location}
-                  </p>
-                )}
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                    marginTop: "20px",
-                  }}
-                >
-                  {bookmark.opportunity?.applyLink && (
-                    <a
-                      href={bookmark.opportunity.applyLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="apply-button"
-                    >
-                      Apply Now →
-                    </a>
+                  {bookmark.pyq && (
+                    <div className="bookmark-tags">
+                      <span>
+                        Semester {bookmark.pyq.semester}
+                      </span>
+                      <span>{bookmark.pyq.branch}</span>
+                      <span>{bookmark.pyq.year}</span>
+                    </div>
                   )}
 
-                  {bookmark.note?.pdfUrl && (
-                    <a
-                      href={
-                        bookmark.note.pdfUrl.startsWith("http")
-                          ? bookmark.note.pdfUrl
-                          : `http://localhost:5000${bookmark.note.pdfUrl}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="apply-button"
-                    >
-                      Open Note →
-                    </a>
+                  {bookmark.opportunity?.location && (
+                    <div className="bookmark-location">
+                      <span>Location</span>
+                      {bookmark.opportunity.location}
+                    </div>
                   )}
-
-                  {bookmark.pyq?.pdfUrl && (
-                    <a
-                      href={
-                        bookmark.pyq.pdfUrl.startsWith("http")
-                          ? bookmark.pyq.pdfUrl
-                          : `http://localhost:5000${bookmark.pyq.pdfUrl}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="apply-button"
-                    >
-                      Open PYQ →
-                    </a>
-                  )}
-
-                  <button
-                    onClick={() => removeBookmark(bookmark.id)}
-                    style={{
-                      padding: "10px 15px",
-                      borderRadius: "8px",
-                      border: "1px solid #e5e7eb",
-                      background: "#fff",
-                      color: "#6b7280",
-                      cursor: "pointer",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Remove
-                  </button>
                 </div>
-              </div>
+
+                <div className="bookmark-footer">
+                  <div className="bookmark-actions">
+                    {bookmark.opportunity?.applyLink && (
+                      <a
+                        href={bookmark.opportunity.applyLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bookmark-action-primary"
+                      >
+                        Apply Now <span>â†’</span>
+                      </a>
+                    )}
+
+                    {bookmark.note?.pdfUrl && (
+                      <a
+                        href={
+                          bookmark.note.pdfUrl.startsWith("http")
+                            ? bookmark.note.pdfUrl
+                            : `http://localhost:5000${bookmark.note.pdfUrl}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bookmark-action-primary"
+                      >
+                        Open Note <span>â†’</span>
+                      </a>
+                    )}
+
+                    {bookmark.pyq?.pdfUrl && (
+                      <a
+                        href={
+                          bookmark.pyq.pdfUrl.startsWith("http")
+                            ? bookmark.pyq.pdfUrl
+                            : `http://localhost:5000${bookmark.pyq.pdfUrl}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bookmark-action-primary"
+                      >
+                        Open PYQ <span>â†’</span>
+                      </a>
+                    )}
+
+                    <button
+                      onClick={() => removeBookmark(bookmark.id)}
+                      className="bookmark-remove"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </article>
             );
           })}
         </div>

@@ -8,7 +8,7 @@ import {
   User,
   Bot,
   UploadCloud,
-  ShieldCheck,
+  ShieldAlert,
   Users,
 } from "lucide-react";
 
@@ -65,7 +65,7 @@ const navItems: NavItem[] = [
   {
     label: "Admin Dashboard",
     path: "/admin/dashboard",
-    icon: ShieldCheck,
+    icon: LayoutDashboard,
     adminOnly: true,
   },
   {
@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
   {
     label: "Admin Moderation",
     path: "/admin/moderation",
-    icon: ShieldCheck,
+    icon: ShieldAlert,
     adminOnly: true,
   },
 ];
@@ -126,3 +126,6 @@ export default function Sidebar() {
     </aside>
   );
 }
+
+
+

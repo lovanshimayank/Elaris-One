@@ -31,7 +31,6 @@ const Opportunities = () => {
         setError("");
 
         const response = await api.get("/opportunities");
-
         setOpportunities(response.data.data || []);
       } catch (err) {
         console.error("Failed to fetch opportunities:", err);
@@ -77,8 +76,8 @@ const Opportunities = () => {
     if (!deadline) {
       return {
         text: "No deadline specified",
-        color: "#6b7280",
-        background: "#f3f4f6",
+        color: "#64748b",
+        background: "#f1f5f9",
       };
     }
 
@@ -115,114 +114,105 @@ const Opportunities = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: "30px" }}>
-        <h1>Opportunities</h1>
-        <p>Loading opportunities...</p>
+      <div className="opportunities-page">
+        <div className="opportunities-loading">
+          <div className="opportunities-loading-spinner" />
+          <h2>Loading Opportunities</h2>
+          <p>Finding the latest opportunities for you...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "30px" }}>
+    <div className="opportunities-page">
       {/* HEADER */}
-      <div style={{ marginBottom: "24px" }}>
-        <h1 style={{ marginBottom: "6px" }}>
-          Opportunities
-        </h1>
+      <div className="opportunities-header">
+        <div>
+          <span className="opportunities-eyebrow">
+            CAREER & CAMPUS OPPORTUNITIES
+          </span>
 
-        <p
-          style={{
-            margin: 0,
-            color: "#6b7280",
-          }}
-        >
-          Discover internships, jobs, hackathons and events.
-        </p>
+          <h1>Opportunities</h1>
+
+          <p>
+            Discover internships, jobs, hackathons and events.
+          </p>
+        </div>
+
+        <div className="opportunities-header-count">
+          <strong>{opportunities.length}</strong>
+          <span>Total Opportunities</span>
+        </div>
       </div>
 
       {/* ERROR */}
       {error && (
-        <div
-          style={{
-            padding: "12px 16px",
-            marginBottom: "20px",
-            borderRadius: "8px",
-            background: "#fee2e2",
-            color: "#991b1b",
-          }}
-        >
-          {error}
+        <div className="opportunities-error">
+          <span>!</span>
+          <div>
+            <strong>Something went wrong</strong>
+            <p>{error}</p>
+          </div>
         </div>
       )}
 
       {/* FILTERS */}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search jobs, internships, hackathons..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: "260px",
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "14px",
-          }}
-        />
+      <div className="opportunities-filter-card">
+        <div className="opportunities-search-wrapper">
+          <span className="opportunities-search-icon">?</span>
 
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          style={{
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">All Types</option>
-          <option value="INTERNSHIP">Internships</option>
-          <option value="JOB">Jobs</option>
-          <option value="HACKATHON">Hackathons</option>
-          <option value="EVENT">Events</option>
-        </select>
+          <input
+            className="opportunities-search"
+            type="text"
+            placeholder="Search jobs, internships, hackathons..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          style={{
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">All Status</option>
-          <option value="ACTIVE">Active Only</option>
-          <option value="CLOSED">Closed</option>
-        </select>
+          {search && (
+            <button
+              className="opportunities-search-clear"
+              onClick={() => setSearch("")}
+              type="button"
+            >
+              ×
+            </button>
+          )}
+        </div>
 
-        {(search ||
-          type !== "ALL" ||
-          status !== "ALL") && (
+        <div className="opportunities-select-wrapper">
+          <label>Type</label>
+
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="ALL">All Types</option>
+            <option value="INTERNSHIP">Internships</option>
+            <option value="JOB">Jobs</option>
+            <option value="HACKATHON">Hackathons</option>
+            <option value="EVENT">Events</option>
+          </select>
+        </div>
+
+        <div className="opportunities-select-wrapper">
+          <label>Status</label>
+
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="ALL">All Status</option>
+            <option value="ACTIVE">Active Only</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </div>
+
+        {(search || type !== "ALL" || status !== "ALL") && (
           <button
+            className="opportunities-clear-button"
             onClick={clearFilters}
-            style={{
-              padding: "12px 16px",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              background: "white",
-              cursor: "pointer",
-            }}
           >
             Clear Filters
           </button>
@@ -230,97 +220,55 @@ const Opportunities = () => {
       </div>
 
       {/* RESULT COUNT */}
-      <p
-        style={{
-          marginBottom: "18px",
-          color: "#6b7280",
-        }}
-      >
-        {filteredOpportunities.length} opportunit
-        {filteredOpportunities.length !== 1 ? "ies" : "y"} found
-      </p>
+      <div className="opportunities-results-bar">
+        <span>
+          <strong>{filteredOpportunities.length}</strong>{" "}
+          opportunit
+          {filteredOpportunities.length !== 1 ? "ies" : "y"} found
+        </span>
 
-      {/* RESULTS */}
+        {(search || type !== "ALL" || status !== "ALL") && (
+          <button onClick={clearFilters}>
+            Reset all filters
+          </button>
+        )}
+      </div>
+
+      {/* EMPTY */}
       {filteredOpportunities.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "60px 20px",
-            border: "1px dashed #d1d5db",
-            borderRadius: "12px",
-          }}
-        >
+        <div className="opportunities-empty">
+          <div className="opportunities-empty-icon">?</div>
+
           <h3>No opportunities found</h3>
 
-          <p style={{ color: "#6b7280" }}>
+          <p>
             {opportunities.length === 0
               ? "New opportunities will appear here when they are posted."
               : "Try changing your search or filters."}
           </p>
 
           {opportunities.length > 0 && (
-            <button
-              onClick={clearFilters}
-              style={{
-                marginTop: "10px",
-                padding: "10px 16px",
-                border: "none",
-                borderRadius: "8px",
-                background: "#111827",
-                color: "white",
-                cursor: "pointer",
-              }}
-            >
+            <button onClick={clearFilters}>
               Reset Filters
             </button>
           )}
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: "20px",
-          }}
-        >
+        <div className="opportunities-grid">
           {filteredOpportunities.map((opportunity) => {
             const deadline = getDeadlineInfo(
               opportunity.deadline
             );
 
             return (
-              <div
+              <article
                 className="opportunity-card"
                 key={opportunity.id}
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "14px",
-                  padding: "20px",
-                  background: "white",
-                  boxShadow:
-                    "0 2px 8px rgba(0,0,0,0.05)",
-                }}
               >
                 {/* TOP */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "10px",
-                    marginBottom: "14px",
-                  }}
-                >
+                <div className="opportunity-card-top">
                   <span
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: "999px",
-                      background: "#eef2ff",
-                      color: "#3730a3",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                    }}
+                    className={`opportunity-type opportunity-type-${opportunity.type.toLowerCase()}`}
                   >
                     {opportunity.type}
                   </span>
@@ -332,68 +280,34 @@ const Opportunities = () => {
                 </div>
 
                 {/* TITLE */}
-                <h2
-                  style={{
-                    margin: "0 0 8px",
-                    fontSize: "20px",
-                  }}
-                >
+                <h2 className="opportunity-title">
                   {opportunity.title}
                 </h2>
 
                 {/* COMPANY */}
                 {opportunity.company && (
-                  <p
-                    style={{
-                      margin: "0 0 12px",
-                      fontWeight: 600,
-                    }}
-                  >
+                  <p className="opportunity-company">
                     {opportunity.company}
                   </p>
                 )}
 
                 {/* DESCRIPTION */}
-                <p
-                  style={{
-                    color: "#6b7280",
-                    lineHeight: 1.5,
-                    marginBottom: "16px",
-                  }}
-                >
+                <p className="opportunity-description">
                   {opportunity.description}
                 </p>
 
                 {/* LOCATION */}
                 {opportunity.location && (
-                  <p
-                    style={{
-                      margin: "8px 0",
-                      fontSize: "14px",
-                    }}
-                  >
-                    📍 <strong>Location:</strong>{" "}
-                    {opportunity.location}
-                  </p>
+                  <div className="opportunity-location">
+                    <span>Location</span>
+                    <strong>{opportunity.location}</strong>
+                  </div>
                 )}
 
                 {/* DEADLINE */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    flexWrap: "wrap",
-                    margin: "14px 0",
-                  }}
-                >
+                <div className="opportunity-deadline-row">
                   {opportunity.deadline && (
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        color: "#4b5563",
-                      }}
-                    >
+                    <span className="opportunity-deadline-date">
                       Deadline:{" "}
                       {new Date(
                         opportunity.deadline
@@ -402,13 +316,10 @@ const Opportunities = () => {
                   )}
 
                   <span
+                    className="opportunity-deadline-badge"
                     style={{
-                      padding: "5px 9px",
-                      borderRadius: "6px",
-                      background: deadline.background,
                       color: deadline.color,
-                      fontSize: "12px",
-                      fontWeight: 600,
+                      background: deadline.background,
                     }}
                   >
                     {deadline.text}
@@ -416,32 +327,16 @@ const Opportunities = () => {
                 </div>
 
                 {/* STATUS */}
-                <div style={{ marginBottom: "16px" }}>
+                <div className="opportunity-status-row">
                   {opportunity.isActive ? (
-                    <span
-                      style={{
-                        color: "#166534",
-                        background: "#dcfce7",
-                        padding: "5px 9px",
-                        borderRadius: "6px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      ● Active
+                    <span className="opportunity-status active">
+                      <i />
+                      Active
                     </span>
                   ) : (
-                    <span
-                      style={{
-                        color: "#991b1b",
-                        background: "#fee2e2",
-                        padding: "5px 9px",
-                        borderRadius: "6px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      ● Closed
+                    <span className="opportunity-status closed">
+                      <i />
+                      Closed
                     </span>
                   )}
                 </div>
@@ -449,28 +344,19 @@ const Opportunities = () => {
                 {/* APPLY */}
                 {opportunity.applyLink &&
                   opportunity.isActive && (
-                    <a
-                      href={opportunity.applyLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "inline-block",
-                        width: "100%",
-                        boxSizing: "border-box",
-                        textAlign: "center",
-                        padding: "11px 16px",
-                        borderRadius: "8px",
-                        textDecoration: "none",
-                        background: "#111827",
-                        color: "white",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Apply Now →
-                    </a>
+                    <div className="opportunity-card-footer">
+                      <a
+                        href={opportunity.applyLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="opportunity-apply-button"
+                      >
+                        Apply Now
+                        <span>?</span>
+                      </a>
+                    </div>
                   )}
-              </div>
+              </article>
             );
           })}
         </div>

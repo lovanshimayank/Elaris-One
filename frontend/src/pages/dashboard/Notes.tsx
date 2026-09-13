@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api";
 import BookmarkButton from "../../components/bookmarks/BookmarkButton";
 
@@ -70,197 +70,212 @@ function Notes() {
 
   if (loading) {
     return (
-      <div className="dashboard-page">
-        <h1>Notes</h1>
-        <p>Loading notes...</p>
+      <div className="dashboard-page notes-page">
+        <div className="notes-loading">
+          <div className="notes-loading-spinner"></div>
+          <h2>Loading study material</h2>
+          <p>Fetching notes from your campus library...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard-page">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "24px",
-          gap: "20px",
-        }}
-      >
+    <div className="dashboard-page notes-page">
+
+      {/* Header */}
+      <div className="notes-header">
         <div>
-          <h1 style={{ marginBottom: "6px" }}>Study Notes</h1>
-          <p style={{ margin: 0 }}>
+          <div className="notes-eyebrow">ACADEMIC LIBRARY</div>
+          <h1>Study Notes</h1>
+          <p>
             Find notes and study material shared by your campus community.
           </p>
         </div>
+
+        <div className="notes-header-count">
+          <strong>{notes.length}</strong>
+          <span>Total Notes</span>
+        </div>
       </div>
 
+      {/* Error */}
       {error && (
-        <div
-          style={{
-            padding: "12px 16px",
-            marginBottom: "20px",
-            borderRadius: "8px",
-            background: "#fee2e2",
-            color: "#991b1b",
-          }}
-        >
-          {error}
+        <div className="notes-error">
+          <span className="notes-error-icon">!</span>
+          <div>
+            <strong>Unable to load notes</strong>
+            <p>{error}</p>
+          </div>
         </div>
       )}
 
-      {/* Filters */}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginBottom: "24px",
-          flexWrap: "wrap",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search notes, subjects, branches..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: "260px",
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "14px",
-          }}
-        />
+      {/* Search + Filters */}
+      <div className="notes-filter-card">
+        <div className="notes-search-wrapper">
+          <span className="notes-search-icon">⌕</span>
 
-        <select
-          value={semester}
-          onChange={(e) => setSemester(e.target.value)}
-          style={{
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            background: "white",
-          }}
-        >
-          <option value="ALL">All Semesters</option>
-          <option value="1">Semester 1</option>
-          <option value="2">Semester 2</option>
-          <option value="3">Semester 3</option>
-          <option value="4">Semester 4</option>
-          <option value="5">Semester 5</option>
-          <option value="6">Semester 6</option>
-          <option value="7">Semester 7</option>
-          <option value="8">Semester 8</option>
-        </select>
+          <input
+            className="notes-search"
+            type="text"
+            placeholder="Search notes, subjects, branches..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          {search && (
+            <button
+              type="button"
+              className="notes-search-clear"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        <div className="notes-semester-wrapper">
+          <span className="notes-filter-label">Semester</span>
+
+          <select
+            className="notes-semester"
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+          >
+            <option value="ALL">All Semesters</option>
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+            <option value="3">Semester 3</option>
+            <option value="4">Semester 4</option>
+            <option value="5">Semester 5</option>
+            <option value="6">Semester 6</option>
+            <option value="7">Semester 7</option>
+            <option value="8">Semester 8</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Result information */}
+      <div className="notes-results-bar">
+        <div>
+          <strong>
+            {filteredNotes.length}
+          </strong>{" "}
+          {filteredNotes.length === 1 ? "note" : "notes"} found
+        </div>
+
+        {(search || semester !== "ALL") && (
+          <button
+            type="button"
+            className="notes-reset"
+            onClick={() => {
+              setSearch("");
+              setSemester("ALL");
+            }}
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* Results */}
       {filteredNotes.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "60px 20px",
-            border: "1px dashed #d1d5db",
-            borderRadius: "12px",
-          }}
-        >
+        <div className="notes-empty">
+          <div className="notes-empty-icon">📚</div>
           <h3>No notes found</h3>
           <p>
             {notes.length === 0
               ? "No study notes have been uploaded yet."
               : "Try changing your search or semester filter."}
           </p>
+
+          {(search || semester !== "ALL") && (
+            <button
+              type="button"
+              className="notes-empty-button"
+              onClick={() => {
+                setSearch("");
+                setSemester("ALL");
+              }}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       ) : (
-        <>
-          <p style={{ marginBottom: "16px" }}>
-            {filteredNotes.length} note
-            {filteredNotes.length !== 1 ? "s" : ""} found
-          </p>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: "20px",
-            }}
-          >
-            {filteredNotes.map((note) => (
-              <div
-                key={note.id}
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  background: "white",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    gap: "10px",
-                  }}
-                >
-                  <div>
-                    <h3 style={{ margin: "0 0 8px" }}>
-                      {note.title}
-                    </h3>
-
-                    {note.subject && (
-                      <p
-                        style={{
-                          margin: "0 0 10px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {note.subject.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <BookmarkButton
-                    type="note"
-                    id={note.id}
-                  />
+        <div className="notes-grid">
+          {filteredNotes.map((note) => (
+            <article
+              key={note.id}
+              className="note-card"
+            >
+              {/* Card top */}
+              <div className="note-card-top">
+                <div className="note-file-icon">
+                  <span>PDF</span>
                 </div>
 
+                <BookmarkButton
+                  type="note"
+                  id={note.id}
+                />
+              </div>
+
+              {/* Title */}
+              <div className="note-card-body">
+                <h3 className="note-title">
+                  {note.title}
+                </h3>
+
+                {note.subject && (
+                  <div className="note-subject">
+                    {note.subject.name}
+                    {note.subject.code && (
+                      <span>{note.subject.code}</span>
+                    )}
+                  </div>
+                )}
+
                 {note.description && (
-                  <p style={{ color: "#6b7280" }}>
+                  <p className="note-description">
                     {note.description}
                   </p>
                 )}
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    flexWrap: "wrap",
-                    margin: "14px 0",
-                  }}
-                >
-                  <span>Semester {note.semester}</span>
-                  <span>•</span>
-                  <span>{note.branch}</span>
+                {/* Metadata */}
+                <div className="note-meta">
+                  <span className="note-meta-item">
+                    <strong>Sem</strong>
+                    {note.semester}
+                  </span>
+
+                  <span className="note-meta-divider"></span>
+
+                  <span className="note-meta-item">
+                    <strong>Branch</strong>
+                    {note.branch}
+                  </span>
                 </div>
 
                 {note.uploadedBy && (
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Uploaded by {note.uploadedBy.fullName}
-                  </p>
-                )}
+                  <div className="note-uploader">
+                    <div className="note-avatar">
+                      {note.uploadedBy.fullName.charAt(0).toUpperCase()}
+                    </div>
 
+                    <div>
+                      <span>Uploaded by</span>
+                      <strong>{note.uploadedBy.fullName}</strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action */}
+              <div className="note-card-footer">
                 <a
+                  className="note-open-button"
                   href={
                     note.pdfUrl.startsWith("http")
                       ? note.pdfUrl
@@ -268,23 +283,14 @@ function Notes() {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    display: "inline-block",
-                    marginTop: "10px",
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    background: "#111827",
-                    color: "white",
-                    fontSize: "14px",
-                  }}
                 >
-                  Open PDF
+                  <span>Open PDF</span>
+                  <span className="note-open-arrow">→</span>
                 </a>
               </div>
-            ))}
-          </div>
-        </>
+            </article>
+          ))}
+        </div>
       )}
     </div>
   );
