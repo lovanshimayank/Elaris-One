@@ -69,3 +69,70 @@ export const processModeration = async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 };
+
+export const deleteNote = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const note = await adminService.deleteNoteByAdmin(
+      req.params.id as string
+    );
+
+    return res.json({
+      success: true,
+      message: "Note deleted successfully",
+      data: note,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const deletePYQ = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const pyq = await adminService.deletePYQByAdmin(
+      req.params.id as string
+    );
+
+    return res.json({
+      success: true,
+      message: "PYQ deleted successfully",
+      data: pyq,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const deleteOpportunity = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const opportunity =
+      await adminService.deleteOpportunityByAdmin(
+        req.params.id as string
+      );
+
+    return res.json({
+      success: true,
+      message: "Opportunity deleted successfully",
+      data: opportunity,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

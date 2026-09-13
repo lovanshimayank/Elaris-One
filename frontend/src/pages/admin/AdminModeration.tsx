@@ -8,6 +8,7 @@ import {
   AlertCircle,
   ExternalLink,
   ShieldAlert,
+  Trash2,
 } from "lucide-react";
 
 import api from "../../api/axios";
@@ -145,6 +146,40 @@ export default function AdminModeration() {
       loadQueue();
     }
   }, [authLoading, user]);
+
+  const deleteItem = async (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => {
+    const confirmed = window.confirm(
+      `Delete "${title}" permanently?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setProcessingId(itemId);
+      setError("");
+
+      const endpointMap = {
+        note: `/admin/notes/${itemId}`,
+        pyq: `/admin/pyqs/${itemId}`,
+        opportunity: `/admin/opportunities/${itemId}`,
+      };
+
+      await api.delete(endpointMap[itemType]);
+
+      await loadQueue();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Failed to delete item."
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const approveItem = async (
     itemType: "note" | "pyq" | "opportunity",
@@ -374,7 +409,8 @@ className="admin-spin" />
                     processing={processingId === item.id}
                     onApprove={approveItem}
                     onReject={openRejectModal}
-                  />
+                    onDelete={deleteItem}
+                    />
                 ))
               )}
             </div>
@@ -392,6 +428,7 @@ className="admin-spin" />
                     processing={processingId === item.id}
                     onApprove={approveItem}
                     onReject={openRejectModal}
+                    onDelete={deleteItem}
                   />
                 ))
               )}
@@ -410,6 +447,7 @@ className="admin-spin" />
                     processing={processingId === item.id}
                     onApprove={approveItem}
                     onReject={openRejectModal}
+                    onDelete={deleteItem}
                   />
                 ))
               )}
@@ -498,6 +536,11 @@ type ActionButtonsProps = {
     itemId: string,
     title: string
   ) => void;
+  onDelete: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => void;
 };
 
 function ActionButtons({
@@ -507,9 +550,21 @@ function ActionButtons({
   processing,
   onApprove,
   onReject,
+  onDelete,
 }: ActionButtonsProps) {
   return (
     <div className="admin-actions">
+      <button
+        className="admin-delete"
+        disabled={processing}
+        onClick={() =>
+          onDelete(itemType, itemId, title)
+        }
+        title="Permanently delete"
+      >
+        <Trash2 size={17} />
+        Delete
+      </button>
       <button
         className="admin-reject"
         disabled={processing}
@@ -540,11 +595,13 @@ function NoteCard({
   processing,
   onApprove,
   onReject,
+onDelete,
 }: {
   item: NoteItem;
   processing: boolean;
   onApprove: ActionButtonsProps["onApprove"];
   onReject: ActionButtonsProps["onReject"];
+  onDelete: ActionButtonsProps["onDelete"];
 }) {
   return (
     <article className="admin-card">
@@ -596,6 +653,7 @@ function NoteCard({
             processing={processing}
             onApprove={onApprove}
             onReject={onReject}
+            onDelete={onDelete}
           />
         </div>
       </div>
@@ -608,13 +666,25 @@ function PYQCard({
   processing,
   onApprove,
   onReject,
+  onDelete,
 }: {
   item: PYQItem;
   processing: boolean;
-  onApprove: ActionButtonsProps["onApprove"];
-  onReject: ActionButtonsProps["onReject"];
-}) {
-  return (
+  onApprove: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string
+  ) => void;
+  onReject: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => void;
+  onDelete: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => void;
+}) {  return (
     <article className="admin-card">
       <div className="admin-card-main">
         <div className="admin-card-title">
@@ -659,6 +729,7 @@ function PYQCard({
             processing={processing}
             onApprove={onApprove}
             onReject={onReject}
+            onDelete={onDelete}
           />
         </div>
       </div>
@@ -670,13 +741,26 @@ function OpportunityCard({
   processing,
   onApprove,
   onReject,
+  onDelete,
 }: {
   item: OpportunityItem;
   processing: boolean;
-  onApprove: ActionButtonsProps["onApprove"];
-  onReject: ActionButtonsProps["onReject"];
+  onApprove: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string
+  ) => void;
+  onReject: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => void;
+  onDelete: (
+    itemType: "note" | "pyq" | "opportunity",
+    itemId: string,
+    title: string
+  ) => void;
 }) {
-  return (
+    return (
     <article className="admin-card">
       <div className="admin-card-main">
         <div className="admin-card-title">
@@ -734,6 +818,7 @@ function OpportunityCard({
             processing={processing}
             onApprove={onApprove}
             onReject={onReject}
+            onDelete={onDelete}
           />
         </div>
       </div>

@@ -1,5 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { UserRole, ModerationStatus } from "@prisma/client";
+import fs from "fs";
+import path from "path";
 
 export async function getAdminMetrics() {
   const [
@@ -203,4 +205,131 @@ export async function resolveModeration(params: {
         summary || `Admin moderation: ${status}`,
     },
   });
+
 }
+
+
+const deletePhysicalFile = (fileUrl?: string | null) => {
+  if (!fileUrl) return;
+
+  try {
+    /*
+     * Expected URL:
+     * /api/v1/downloads/notes/filename.pdf
+     *
+     * We only extract the upload folder + filename.
+     */
+    const match = fileUrl.match(
+      /\/downloads\/([^/]+)\/([^/]+)$/
+    );
+
+    if (!match) {
+      console.warn(
+        "Could not resolve physical upload path:",
+        fileUrl
+      );
+      return;
+    }
+
+    const [, folder, filename] = match;
+
+    const filePath = path.join(
+      process.cwd(),
+      "uploads",
+      folder,
+      filename
+    );
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log("Deleted physical file:", filePath);
+    } else {
+      console.warn(
+        "Physical file not found:",
+        filePath
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Failed to delete physical file:",
+      error
+    );
+  }
+};
+
+export const deleteNoteByAdmin = async (
+  id: string
+) => {
+  const note = await prisma.note.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      pdfUrl: true,
+    },
+  });
+
+  if (!note) {
+    throw new Error("Note not found");
+  }
+
+  /*
+   * Delete database record first.
+   */
+  const deletedNote = await prisma.note.delete({
+    where: { id },
+  });
+
+  /*
+   * Then remove the physical uploaded file.
+   */
+  deletePhysicalFile(note.pdfUrl);
+
+  return deletedNote;
+};
+
+export const deletePYQByAdmin = async (
+  id: string
+) => {
+  const pyq = await prisma.pYQ.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      pdfUrl: true,
+    },
+  });
+
+  if (!pyq) {
+    throw new Error("PYQ not found");
+  }
+
+  const deletedPYQ = await prisma.pYQ.delete({
+    where: { id },
+  });
+
+  deletePhysicalFile(pyq.pdfUrl);
+
+  return deletedPYQ;
+};
+
+export const deleteOpportunityByAdmin = async (
+  id: string
+) => {
+  const opportunity =
+    await prisma.opportunity.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+  if (!opportunity) {
+    throw new Error("Opportunity not found");
+  }
+
+  return prisma.opportunity.delete({
+    where: { id },
+  });
+};
