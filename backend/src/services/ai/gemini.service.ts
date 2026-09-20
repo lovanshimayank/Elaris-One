@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+﻿import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -52,78 +52,123 @@ const sleep = (ms: number) =>
 
 const isTemporaryGeminiError = (error: any): boolean => {
   const status = error?.status;
-  const errorMessage = String(error?.message || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
 
   return (
+    status === 408 ||
     status === 429 ||
     status === 500 ||
     status === 502 ||
     status === 503 ||
     status === 504 ||
-    errorMessage.includes("high demand") ||
-    errorMessage.includes("unavailable") ||
-    errorMessage.includes("overloaded") ||
-    errorMessage.includes("temporarily")
+    message.includes("high demand") ||
+    message.includes("unavailable") ||
+    message.includes("overloaded") ||
+    message.includes("temporarily")
   );
 };
 
-async function generateWithFallback(prompt: string): Promise<string> {
+async function generateWithModel(
+  model: string,
+  prompt: string
+): Promise<string> {
+  const maxAttempts = 3;
+
+  let lastError: any = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(
+        `AI request: model=${model}, attempt=${attempt}/${maxAttempts}`
+      );
+
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+      });
+
+      const text = response?.text?.trim();
+
+      if (!text) {
+        throw new Error(
+          `Gemini returned an empty response from ${model}`
+        );
+      }
+
+      console.log(
+        `AI response generated using ${model}`
+      );
+
+      return text;
+    } catch (error: any) {
+      lastError = error;
+
+      const status = error?.status;
+
+      console.error(
+        `Gemini error: model=${model}, attempt=${attempt}, status=${status}`
+      );
+
+      if (!isTemporaryGeminiError(error)) {
+        throw error;
+      }
+
+      if (attempt < maxAttempts) {
+        const baseDelay = 1000 * Math.pow(2, attempt - 1);
+        const jitter = Math.floor(Math.random() * 500);
+        const delay = baseDelay + jitter;
+
+        console.warn(
+          `Temporary Gemini error. Retrying in ${delay}ms...`
+        );
+
+        await sleep(delay);
+      }
+    }
+  }
+
+  throw lastError || new Error(
+    `Gemini model ${model} failed`
+  );
+}
+
+async function generateWithFallback(
+  prompt: string
+): Promise<string> {
   const models = [
     "gemini-3.6-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
+    "gemini-3.5-flash",
   ];
 
   let lastError: any = null;
 
   for (const model of models) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        console.log(
-          `AI request: model=${model}, attempt=${attempt}`
-        );
+    try {
+      return await generateWithModel(model, prompt);
+    } catch (error: any) {
+      lastError = error;
 
-        const response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-        });
+      console.error(
+        `Model ${model} failed.`
+      );
 
-        const text = response?.text;
-
-        if (!text) {
-          throw new Error(
-            `Gemini returned an empty response from ${model}`
-          );
-        }
-
-        console.log(
-          `AI response generated using ${model}`
-        );
-
-        return text;
-      } catch (error: any) {
-        lastError = error;
-
-        console.error(
-          `Gemini error: model=${model}, attempt=${attempt}, status=${error?.status}`
-        );
-
-        if (!isTemporaryGeminiError(error)) {
-          throw error;
-        }
-
-        if (attempt < 2) {
-          await sleep(1200);
-        }
+      /*
+       * Do not fallback for permanent request/configuration
+       * errors such as invalid API keys or malformed requests.
+       */
+      if (!isTemporaryGeminiError(error)) {
+        throw error;
       }
-    }
 
-    console.warn(
-      `Model ${model} unavailable. Trying fallback model...`
-    );
+      console.warn(
+        `Trying fallback model after temporary failure: ${model}`
+      );
+    }
   }
 
-  throw lastError || new Error("All Gemini models failed");
+  throw lastError || new Error(
+    "All configured Gemini models failed"
+  );
 }
 
 export async function generateAIResponse(
