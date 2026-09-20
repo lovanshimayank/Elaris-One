@@ -36,11 +36,19 @@ export default function AIAssistant() {
     setLoading(true);
 
     try {
-      const response = await api.post("/ai/chat", {
-        message: userMessage,
-      });
+const response = await api.post("/ai/chat", {
+  message: userMessage,
+});
 
-      const reply = response.data?.data?.reply;
+console.log("========== AI FRONTEND RESPONSE ==========");
+console.log(response.data);
+console.log("==========================================");
+
+const reply = response.data?.data?.reply;
+
+if (!reply) {
+  throw new Error("AI returned an empty response.");
+}
 
       setMessages((prev) => [
         ...prev,
