@@ -21,10 +21,10 @@ export const registerValidation = [
 ];
 
 export const loginValidation = [
-  body("enrollmentNumber")
+  body("email")
     .trim()
-    .notEmpty()
-    .withMessage("Enrollment number is required"),
+    .isEmail()
+    .withMessage("Valid email is required"),
 
   body("password")
     .notEmpty()

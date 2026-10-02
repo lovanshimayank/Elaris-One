@@ -6,9 +6,12 @@ import {
   FileText,
   GraduationCap,
   BriefcaseBusiness,
+  UserRound,
+  LogOut,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
@@ -44,9 +47,13 @@ export default function Navbar() {
   );
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationLoading, setNotificationLoading] = useState(false);
+const [notificationLoading, setNotificationLoading] = useState(false);
 
-  const { user } = useAuth();
+const [showUserMenu, setShowUserMenu] = useState(false);
+
+const userMenuRef = useRef<HTMLDivElement | null>(null);
+
+const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const fullName = user?.fullName || "Student";
@@ -65,7 +72,35 @@ export default function Navbar() {
       : user?.role === "FACULTY"
         ? "Faculty"
         : "Student";
+  
+        useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      userMenuRef.current &&
+      !userMenuRef.current.contains(event.target as Node)
+    ) {
+      setShowUserMenu(false);
+    }
+  };
 
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
+
+const handleLogout = async () => {
+  try {
+    await logout();
+  } catch (error) {
+    console.error("Logout failed:", error);
+  } finally {
+    setShowUserMenu(false);
+    navigate("/login");
+  }
+};
   // ---------------- SEARCH ----------------
 
   useEffect(() => {
@@ -515,16 +550,72 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* USER */}
+        {/* USER MENU */}
 
-        <div className="user-mini">
-          <div className="avatar">{initials}</div>
+<div className="user-menu-wrapper" ref={userMenuRef}>
+  <button
+    type="button"
+    className={`user-menu-trigger ${
+      showUserMenu ? "active" : ""
+    }`}
+    onClick={() => {
+      setShowUserMenu((current) => !current);
+      setShowNotifications(false);
+    }}
+    aria-label="Open user menu"
+    aria-expanded={showUserMenu}
+  >
+    <div className="avatar">{initials}</div>
 
-          <div>
-            <strong>{fullName}</strong>
-            <span>{role}</span>
-          </div>
+    <div className="user-menu-identity">
+      <strong>{fullName}</strong>
+      <span>{role}</span>
+    </div>
+
+    <ChevronDown
+      size={16}
+      className={`user-menu-chevron ${
+        showUserMenu ? "rotate" : ""
+      }`}
+    />
+  </button>
+
+  {showUserMenu && (
+    <div className="user-menu-dropdown">
+      <div className="user-menu-profile">
+        <div className="user-menu-large-avatar">
+          {initials}
         </div>
+
+        <div className="user-menu-profile-info">
+          <strong>{fullName}</strong>
+          <span>{user?.email || "No email available"}</span>
+          <small>{role}</small>
+        </div>
+      </div>
+
+      <div className="user-menu-divider" />
+
+      <Link
+        to="/profile"
+        className="user-menu-item"
+        onClick={() => setShowUserMenu(false)}
+      >
+        <UserRound size={17} />
+        <span>My Profile</span>
+      </Link>
+
+      <button
+        type="button"
+        className="user-menu-item user-menu-logout"
+        onClick={handleLogout}
+      >
+        <LogOut size={17} />
+        <span>Logout</span>
+      </button>
+    </div>
+  )}
+</div>
       </div>
     </header>
   );
