@@ -53,26 +53,31 @@ const sleep = (ms: number) =>
 const isTemporaryGeminiError = (error: any): boolean => {
   const status = error?.status;
   const message = String(error?.message || "").toLowerCase();
+  const causeCode = String(error?.cause?.code || "").toUpperCase();
 
   return (
-    status === 408 ||
-    status === 429 ||
-    status === 500 ||
-    status === 502 ||
-    status === 503 ||
-    status === 504 ||
+    [408, 429, 500, 502, 503, 504].includes(status) ||
     message.includes("high demand") ||
     message.includes("unavailable") ||
     message.includes("overloaded") ||
-    message.includes("temporarily")
+    message.includes("temporarily") ||
+    message.includes("timeout") ||
+    message.includes("fetch failed") ||
+    message.includes("network error") ||
+    causeCode === "UND_ERR_CONNECT_TIMEOUT" ||
+    causeCode === "ECONNRESET" ||
+    causeCode === "ETIMEDOUT" ||
+    causeCode === "ECONNREFUSED" ||
+    causeCode === "EAI_AGAIN"
   );
 };
-
 async function generateWithModel(
   model: string,
   prompt: string
 ): Promise<string> {
-  const maxAttempts = 3;
+  // Two attempts per model.
+  // This prevents one overloaded model from delaying the fallback chain too much.
+  const maxAttempts = 2;
 
   let lastError: any = null;
 
@@ -96,7 +101,7 @@ async function generateWithModel(
       }
 
       console.log(
-        `AI response generated using ${model}`
+        `AI response generated successfully using ${model}`
       );
 
       return text;
@@ -104,22 +109,24 @@ async function generateWithModel(
       lastError = error;
 
       const status = error?.status;
+      const message = String(error?.message || "");
 
       console.error(
         `Gemini error: model=${model}, attempt=${attempt}, status=${status}`
       );
 
+      console.error(`Gemini message: ${message}`);
+
+      // Permanent errors should not be retried.
       if (!isTemporaryGeminiError(error)) {
         throw error;
       }
 
       if (attempt < maxAttempts) {
-        const baseDelay = 1000 * Math.pow(2, attempt - 1);
-        const jitter = Math.floor(Math.random() * 500);
-        const delay = baseDelay + jitter;
+        const delay = 1500;
 
         console.warn(
-          `Temporary Gemini error. Retrying in ${delay}ms...`
+          `Temporary Gemini error. Retrying ${model} in ${delay}ms...`
         );
 
         await sleep(delay);
@@ -127,15 +134,30 @@ async function generateWithModel(
     }
   }
 
-  throw lastError || new Error(
-    `Gemini model ${model} failed`
+  throw (
+    lastError ||
+    new Error(`Gemini model ${model} failed`)
   );
 }
 
 async function generateWithFallback(
   prompt: string
 ): Promise<string> {
+
+  /*
+   * Fallback order:
+   *
+   * 1. Gemini 3.8 Flash
+   * 2. Gemini 3.7 Flash
+   * 3. Gemini 3.6 Flash
+   * 4. Gemini 3.5 Flash
+   *
+   * All are currently documented Gemini 3 Flash endpoints.
+   */
+
   const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
     "gemini-3.6-flash",
     "gemini-3.5-flash",
   ];
@@ -153,21 +175,30 @@ async function generateWithFallback(
       );
 
       /*
-       * Do not fallback for permanent request/configuration
-       * errors such as invalid API keys or malformed requests.
+       * Do not switch models for permanent configuration/request errors.
+       *
+       * Example:
+       * - Invalid API key
+       * - Malformed request
+       * - Invalid request parameters
+       *
+       * Switch models only for temporary provider failures.
        */
       if (!isTemporaryGeminiError(error)) {
         throw error;
       }
 
       console.warn(
-        `Trying fallback model after temporary failure: ${model}`
+        `Trying next Gemini fallback after temporary failure: ${model}`
       );
     }
   }
 
-  throw lastError || new Error(
-    "All configured Gemini models failed"
+  throw (
+    lastError ||
+    new Error(
+      "All configured Gemini models failed"
+    )
   );
 }
 
@@ -175,6 +206,7 @@ export async function generateAIResponse(
   message: string,
   context?: AIContext
 ): Promise<string> {
+
   const prompt = `
 You are Elaris AI, an intelligent campus assistant.
 
@@ -193,6 +225,7 @@ Your job is to help students with:
 IMPORTANT RULES:
 
 1. Give clear and useful answers.
+
 2. Personalize responses using the student's context when relevant.
 
 3. RESOURCE ACCURACY:

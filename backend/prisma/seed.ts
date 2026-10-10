@@ -7,8 +7,7 @@ import {
 
 const prisma = new PrismaClient();
 
-const DEMO_PDF =
-  "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+const DEMO_PDF = "";
 
 async function main() {
   console.log("🌱 Seeding Elaris-One demo data...");
@@ -186,6 +185,7 @@ async function main() {
   ];
 
   for (const note of notes) {
+    if (!DEMO_PDF) continue;
     const data = {
       title: note.title,
       description: note.description,
@@ -288,6 +288,7 @@ async function main() {
   ];
 
   for (const pyq of pyqs) {
+    if (!DEMO_PDF) continue;
     const data = {
       title: pyq.title,
       year: pyq.year,

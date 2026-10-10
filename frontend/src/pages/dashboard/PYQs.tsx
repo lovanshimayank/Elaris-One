@@ -1,3 +1,4 @@
+﻿import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api";
 import BookmarkButton from "../../components/bookmarks/BookmarkButton";
@@ -152,7 +153,7 @@ function PYQs() {
               onClick={() => setSearch("")}
               type="button"
             >
-              ×
+              Ã—
             </button>
           )}
         </div>
@@ -261,7 +262,7 @@ function PYQs() {
                 {pyq.subject && (
                   <p className="pyq-subject">
                     {pyq.subject.name}
-                    {pyq.subject.code ? ` · ${pyq.subject.code}` : ""}
+                    {pyq.subject.code ? ` Â· ${pyq.subject.code}` : ""}
                   </p>
                 )}
 
@@ -286,19 +287,10 @@ function PYQs() {
 
               {pyq.pdfUrl && (
                 <div className="pyq-card-footer">
-                  <a
-                    href={
-                      pyq.pdfUrl.startsWith("http")
-                        ? pyq.pdfUrl
-                        : `http://localhost:5000${pyq.pdfUrl}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pyq-open-button"
-                  >
+                  <Link to={`/reader/PYQ/${pyq.id}`} className="pyq-open-button">
                     Open PYQ PDF
                     <span>?</span>
-                  </a>
+                  </Link>
                 </div>
               )}
             </article>
@@ -310,3 +302,4 @@ function PYQs() {
 }
 
 export default PYQs;
+

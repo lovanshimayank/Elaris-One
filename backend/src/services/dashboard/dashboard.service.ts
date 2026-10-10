@@ -24,27 +24,17 @@ export const getDashboard = async (userId: string) => {
     latestPYQs,
     latestOpportunities,
   ] = await Promise.all([
-    prisma.note.count(),
+    prisma.note.count({ where: { isApproved: true, isPublic: true, pdfUrl: { not: "" } } }),
 
-    prisma.pYQ.count(),
+    prisma.pYQ.count({ where: { moderationStatus: "APPROVED", pdfUrl: { not: "" } } }),
 
     prisma.opportunity.count(),
 
     prisma.user.count(),
 
-    prisma.note.findMany({
-      take: 5,
-      orderBy: {
-        createdAt: "desc",
-      },
-    }),
+    prisma.note.findMany({ where: { isApproved: true, isPublic: true, pdfUrl: { not: "" } }, take: 5, orderBy: { createdAt: "desc" } }),
 
-    prisma.pYQ.findMany({
-      take: 5,
-      orderBy: {
-        createdAt: "desc",
-      },
-    }),
+    prisma.pYQ.findMany({ where: { moderationStatus: "APPROVED", pdfUrl: { not: "" } }, take: 5, orderBy: { createdAt: "desc" } }),
 
     prisma.opportunity.findMany({
       take: 5,

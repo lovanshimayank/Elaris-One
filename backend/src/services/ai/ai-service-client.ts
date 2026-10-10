@@ -233,3 +233,118 @@ ${params.text ? `\nContent:\n${params.text.slice(0, 5000)}` : ""}`;
     };
   }
 }
+/**
+ * Strict quiz generation for PDF reading.
+ * Unlike the general quiz generator, this never returns placeholder questions.
+ */
+export async function generateQuizStrictWithAI(params: {
+  topic: string;
+  difficulty?: string;
+  count?: number;
+  text: string;
+}): Promise<{
+  title: string;
+  topic: string;
+  difficulty: string;
+  questions: Array<{
+    question: string;
+    options: string[];
+    correctOption: number;
+    explanation?: string;
+  }>;
+}> {
+  const count = Math.min(Math.max(params.count ?? 5, 1), 10);
+  const difficulty = params.difficulty ?? "MEDIUM";
+  const sourceText = params.text.trim();
+
+  if (sourceText.length < 100) {
+    throw new Error(
+      "Not enough readable PDF text to generate a reliable quiz. This PDF may be scanned or contain very little text."
+    );
+  }
+
+  const prompt = `You are an academic assessment expert.
+Create exactly ${count} multiple-choice questions at ${difficulty} difficulty.
+Use ONLY the supplied source text. Do not invent facts or use outside knowledge.
+Every correct answer must be supported by the source.
+Each question must have 4 distinct options and one correct answer.
+correctOption is a zero-based integer from 0 to 3.
+Return ONLY valid JSON in this format:
+{
+  "title": "Short assessment title",
+  "topic": "Topic",
+  "difficulty": "${difficulty}",
+  "questions": [
+    {
+      "question": "Question text",
+      "options": ["A", "B", "C", "D"],
+      "correctOption": 0,
+      "explanation": "Brief explanation grounded in the source"
+    }
+  ]
+}
+
+TOPIC: ${params.topic}
+
+SOURCE TEXT:
+${sourceText.slice(0, 18000)}`;
+
+  const raw = await generateAIResponse(prompt);
+  const cleaned = raw
+    .replace(/^\s*\`\`\`(?:json)?\s*/i, "")
+    .replace(/\s*\`\`\`\s*$/i, "")
+    .trim();
+
+  let parsed: any;
+
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error("The AI returned invalid quiz data. Please retry.");
+  }
+
+  if (
+    !parsed ||
+    !Array.isArray(parsed.questions) ||
+    parsed.questions.length !== count
+  ) {
+    throw new Error("The AI did not generate the required number of questions.");
+  }
+
+  const questions = parsed.questions.map((q: any, index: number) => {
+    if (
+      typeof q?.question !== "string" ||
+      !q.question.trim() ||
+      !Array.isArray(q.options) ||
+      q.options.length !== 4 ||
+      !q.options.every(
+        (option: unknown) =>
+          typeof option === "string" && option.trim().length > 0
+      ) ||
+      new Set(q.options.map((option: string) => option.trim())).size !== 4 ||
+      !Number.isInteger(q.correctOption) ||
+      q.correctOption < 0 ||
+      q.correctOption > 3
+    ) {
+      throw new Error(`The AI returned an invalid question at position ${index + 1}.`);
+    }
+
+    return {
+      question: q.question.trim(),
+      options: q.options.map((option: string) => option.trim()),
+      correctOption: q.correctOption,
+      explanation:
+        typeof q.explanation === "string" ? q.explanation.trim() : undefined,
+    };
+  });
+
+  return {
+    title:
+      typeof parsed.title === "string" && parsed.title.trim()
+        ? parsed.title.trim()
+        : `${params.topic} Assessment`,
+    topic: params.topic,
+    difficulty,
+    questions,
+  };
+}

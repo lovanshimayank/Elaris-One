@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 
 import authRoutes from "./auth/auth.routes.js";
 import userRoutes from "./users/user.routes";
@@ -15,6 +15,7 @@ import notificationRoutes from "./notifications/notification.routes.js";
 import aiRoutes from "./ai/ai.routes.js";
 import downloadRoutes from "./downloads/download.routes.js";
 import adminRoutes from "./admin/admin.routes.js";
+import readingRoutes from "./reading/reading.routes.js";
 
 const router = Router();
 
@@ -32,6 +33,7 @@ router.use("/bookmarks", bookmarkRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/ai", aiRoutes);
 router.use("/downloads", downloadRoutes);
+router.use("/reading", readingRoutes);
 
 // ADMIN ROUTES
 router.use("/admin", adminRoutes);
@@ -44,3 +46,4 @@ router.get("/test-ai", (_req, res) => {
 });
 
 export default router;
+

@@ -28,23 +28,24 @@ model Subject {
   updatedAt    DateTime   @updatedAt
   notes        Note[]
   pyqs         PYQ[]
+  quizzes      Quiz[]
   department   Department @relation(fields: [departmentId], references: [id])
 }
 
 model User {
-  id               String         @id @default(cuid())
-  enrollmentNumber String         @unique
+  id               String            @id @default(cuid())
+  enrollmentNumber String            @unique
   fullName         String
-  email            String         @unique
+  email            String            @unique
   password         String
   phone            String?
-  role             UserRole       @default(STUDENT)
+  role             UserRole          @default(STUDENT)
   semester         Int?
   departmentId     String?
-  isVerified       Boolean        @default(false)
-  isActive         Boolean        @default(true)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  isVerified       Boolean           @default(false)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   bio              String?
   branch           String?
   college          String?
@@ -59,7 +60,10 @@ model User {
   notes            Note[]
   opportunities    Opportunity[]
   pyqs             PYQ[]
-  department       Department?    @relation(fields: [departmentId], references: [id])
+  quizzes          Quiz[]            @relation("QuizCreator")
+  quizAttempts     QuizAttempt[]
+  readingProgress  ReadingProgress[]
+  department       Department?       @relation(fields: [departmentId], references: [id])
 
   @@index([enrollmentNumber])
 }
@@ -86,6 +90,7 @@ model Note {
   moderationStatus     ModerationStatus @default(PENDING)
   moderationSummary    String?
   bookmarks            Bookmark[]
+  quizzes              Quiz[]
   subject              Subject          @relation(fields: [subjectId], references: [id])
   uploadedBy           User             @relation(fields: [uploadedById], references: [id])
 }
@@ -198,4 +203,102 @@ enum NotificationType {
   REJECTED
   OPPORTUNITY
   ANNOUNCEMENT
+}
+
+enum QuizType {
+  GENERAL
+  CHUNK
+  FINAL
+}
+
+enum ReadingResourceType {
+  NOTE
+  PYQ
+}
+
+model Quiz {
+  id             String               @id @default(cuid())
+  title          String
+  description    String?
+  topic          String
+  difficulty     String               @default("MEDIUM")
+  subjectId      String?
+  noteId         String?
+  createdById    String
+  quizType       QuizType             @default(GENERAL)
+  sourceType     ReadingResourceType?
+  sourceId       String?
+  startPage      Int?
+  endPage        Int?
+  idempotencyKey String?              @unique
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  subject   Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  note      Note?          @relation(fields: [noteId], references: [id], onDelete: SetNull)
+  createdBy User           @relation("QuizCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@index([subjectId])
+  @@index([sourceType, sourceId])
+}
+
+model QuizQuestion {
+  id            String   @id @default(cuid())
+  question      String
+  options       String[]
+  correctOption Int
+  explanation   String?
+  order         Int
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, order])
+}
+
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  quizId         String
+  userId         String
+  score          Int
+  totalQuestions Int
+  answers        Json
+  idempotencyKey String?  @unique
+  completedAt    DateTime @default(now())
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, quizId])
+  @@index([userId, completedAt])
+}
+
+model ReadingProgress {
+  id           String              @id @default(cuid())
+  userId       String
+  resourceType ReadingResourceType
+  resourceId   String
+  totalPages   Int
+  lastPage     Int                 @default(1)
+  completedAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pages ReadingPageProgress[]
+
+  @@unique([userId, resourceType, resourceId])
+  @@index([userId, updatedAt])
+}
+
+model ReadingPageProgress {
+  id         String   @id @default(cuid())
+  progressId String
+  pageNumber Int
+  visitedAt  DateTime @default(now())
+
+  progress ReadingProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+
+  @@unique([progressId, pageNumber])
 }

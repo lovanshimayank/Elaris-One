@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api";
 import BookmarkButton from "../../components/bookmarks/BookmarkButton";
 
@@ -274,19 +275,10 @@ function Notes() {
 
               {/* Action */}
               <div className="note-card-footer">
-                <a
-                  className="note-open-button"
-                  href={
-                    note.pdfUrl.startsWith("http")
-                      ? note.pdfUrl
-                      : `http://localhost:5000${note.pdfUrl}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <Link to={`/reader/NOTE/${note.id}`} className="note-open-button">
                   <span>Open PDF</span>
                   <span className="note-open-arrow">→</span>
-                </a>
+                </Link>
               </div>
             </article>
           ))}
@@ -297,3 +289,4 @@ function Notes() {
 }
 
 export default Notes;
+

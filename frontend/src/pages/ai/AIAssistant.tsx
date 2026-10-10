@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import api from "../../services/api";
 
 interface Message {
@@ -40,9 +40,6 @@ const response = await api.post("/ai/chat", {
   message: userMessage,
 });
 
-console.log("========== AI FRONTEND RESPONSE ==========");
-console.log(response.data);
-console.log("==========================================");
 
 const reply = response.data?.data?.reply;
 
@@ -84,7 +81,7 @@ if (!reply) {
     setMessages([]);
   };
 
-  const useSuggestion = (text: string) => {
+  const applySuggestion = (text: string) => {
     setMessage(text);
   };
 
@@ -93,7 +90,7 @@ if (!reply) {
       <div className="ai-header">
         <div>
           <div className="ai-title-row">
-            <div className="ai-logo">✦</div>
+            <div className="ai-logo">âœ¦</div>
 
             <div>
               <h1>Elaris AI</h1>
@@ -126,7 +123,7 @@ if (!reply) {
       <div className="ai-chat-container">
         {messages.length === 0 ? (
           <div className="ai-empty-state">
-            <div className="ai-empty-icon">✦</div>
+            <div className="ai-empty-icon">âœ¦</div>
 
             <h2>How can I help you?</h2>
 
@@ -139,45 +136,45 @@ if (!reply) {
               <button
                 type="button"
                 onClick={() =>
-                  useSuggestion(
+                  applySuggestion(
                     "Explain DBMS normalization in simple terms with an example."
                   )
                 }
               >
-                📚 Explain DBMS normalization
+                ðŸ“š Explain DBMS normalization
               </button>
 
               <button
                 type="button"
                 onClick={() =>
-                  useSuggestion(
+                  applySuggestion(
                     "Give me a study plan for my upcoming semester exams."
                   )
                 }
               >
-                🎯 Create a study plan
+                ðŸŽ¯ Create a study plan
               </button>
 
               <button
                 type="button"
                 onClick={() =>
-                  useSuggestion(
+                  applySuggestion(
                     "Explain the difference between supervised and unsupervised learning."
                   )
                 }
               >
-                🤖 Explain an AI/ML concept
+                ðŸ¤– Explain an AI/ML concept
               </button>
 
               <button
                 type="button"
                 onClick={() =>
-                  useSuggestion(
+                  applySuggestion(
                     "Give me some important topics to prepare for a software engineering interview."
                   )
                 }
               >
-                💼 Interview preparation
+                ðŸ’¼ Interview preparation
               </button>
             </div>
           </div>
@@ -193,7 +190,7 @@ if (!reply) {
                 }`}
               >
                 <div className="ai-message-avatar">
-                  {msg.role === "user" ? "M" : "✦"}
+                  {msg.role === "user" ? "M" : "âœ¦"}
                 </div>
 
                 <div className="ai-message-content">
@@ -210,7 +207,7 @@ if (!reply) {
 
             {loading && (
               <div className="ai-message ai-message-assistant">
-                <div className="ai-message-avatar">✦</div>
+                <div className="ai-message-avatar">âœ¦</div>
 
                 <div className="ai-message-content">
                   <div className="ai-message-role">
@@ -249,7 +246,7 @@ if (!reply) {
             disabled={loading || !message.trim()}
             aria-label="Send message"
           >
-            {loading ? "..." : "➤"}
+            {loading ? "..." : "âž¤"}
           </button>
         </div>
 
