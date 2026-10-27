@@ -1,11 +1,11 @@
-import { Request, Response } from "express";
+﻿import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { registerUser, loginUser } from "../../services/auth/auth.service.js";
 
 export const logout = async (req: Request, res: Response) => {
   res.clearCookie('token', {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'none',
     secure: process.env.NODE_ENV === 'production',
   });
   return res.status(200).json({ success: true, message: 'Logged out successfully' });
@@ -20,7 +20,7 @@ export const register = async (req: Request, res: Response) => {
     const result = await registerUser(req.body);
     res.cookie('token', result.token, {
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -48,7 +48,7 @@ export const login = async (req: Request, res: Response) => {
     const result = await loginUser(req.body);
     res.cookie('token', result.token, {
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
