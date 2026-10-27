@@ -16,3 +16,6 @@ __pycache__/
 
 .DS_Store
 backend/node_modules_old/
+
+# Local cookies and session files
+backend/cookie.txt
